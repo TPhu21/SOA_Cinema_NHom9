@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMax - Đăng Nhập & Đăng Ký</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --primary: #e50914; --primary-dark: #b2070f; --secondary: #221f1f; --light: #f5f5f1; --dark: #000000; --gray: #757575; --success: #46d369; --transition: all 0.3s ease; }
+        body { background-color: var(--secondary); color: var(--light); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+        header { background-color: var(--dark); padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+        .logo { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-decoration: none; }
+        .logo span { color: var(--light); }
+        .nav-menu { display: flex; list-style: none; }
+        .nav-menu li { margin-left: 1.5rem; }
+        .nav-menu a { color: var(--light); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-menu a:hover { color: var(--primary); }
+        .user-actions { display: flex; align-items: center; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--light); color: var(--light); margin-right: 10px; }
+        .btn-outline:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; flex: 1; display: flex; align-items: center; justify-content: center; }
+        .auth-container { display: flex; width: 100%; max-width: 900px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+        .auth-forms { flex: 1; padding: 3rem; }
+        .auth-hero { flex: 1; background: linear-gradient(rgba(229, 9, 20, 0.8), rgba(178, 7, 15, 0.9)), url('https://images.unsplash.com/photo-1489599809505-fc6c1bb11673?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') no-repeat center center; background-size: cover; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center; }
+        .auth-hero h2 { font-size: 2rem; margin-bottom: 1rem; }
+        .auth-hero p { font-size: 1.1rem; max-width: 300px; }
+        .form-title { font-size: 2rem; margin-bottom: 0.5rem; color: var(--light); }
+        .form-subtitle { color: var(--gray); margin-bottom: 2rem; }
+        .form-toggle { display: flex; margin-bottom: 2rem; background-color: rgba(255, 255, 255, 0.1); border-radius: 5px; overflow: hidden; }
+        .toggle-btn { flex: 1; padding: 0.8rem; text-align: center; background: transparent; border: none; color: var(--light); font-weight: 500; cursor: pointer; transition: var(--transition); }
+        .toggle-btn.active { background-color: var(--primary); }
+        .form { display: none; }
+        .form.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-control { width: 100%; padding: 0.75rem 1rem; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: var(--light); font-size: 1rem; transition: var(--transition); }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2); }
+        .password-container { position: relative; }
+        .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--gray); cursor: pointer; }
+        .form-options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .remember-me { display: flex; align-items: center; }
+        .remember-me input { margin-right: 0.5rem; }
+        .forgot-password { color: var(--primary); text-decoration: none; transition: var(--transition); }
+        .forgot-password:hover { text-decoration: underline; }
+        .divider { display: flex; align-items: center; margin: 1.5rem 0; color: var(--gray); }
+        .divider::before, .divider::after { content: ""; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+        .divider span { padding: 0 1rem; }
+        .social-login { display: flex; gap: 1rem; }
+        .social-btn { flex: 1; padding: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--light); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: var(--transition); }
+        .social-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .terms { margin-top: 1.5rem; font-size: 0.9rem; color: var(--gray); text-align: center; }
+        .terms a { color: var(--primary); text-decoration: none; }
+        .terms a:hover { text-decoration: underline; }
+        footer { background-color: var(--dark); padding: 2rem; text-align: center; margin-top: auto; }
+        .footer-content { max-width: 1200px; margin: 0 auto; }
+        .footer-links { display: flex; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .footer-links a { color: var(--gray); text-decoration: none; margin: 0 1rem; transition: var(--transition); }
+        .footer-links a:hover { color: var(--light); }
+        .copyright { color: var(--gray); font-size: 0.9rem; }
+        @media (max-width: 768px) { .auth-container { flex-direction: column; } .auth-hero { padding: 2rem 1rem; order: -1; } .auth-forms { padding: 2rem; } .social-login { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="TrangChu.html" class="logo">Cine<span>Max</span></a>
+            <ul class="nav-menu">
+                <li><a href="TrangChu.html">Trang Chủ</a></li>
+                <li><a href="Phim.html">Phim</a></li>
+                <li><a href="RapChieu.html">Rạp Chiếu</a></li>
+                <li><a href="KhuyenMai.html">Khuyến Mãi</a></li>
+                <li><a href="LienHe.html">Liên Hệ</a></li>
+                <li><a href="DangKyThanhVien.html">Đăng ký hội viên</a></li>
+            </ul>
+            <div class="user-actions">
+                <button class="btn btn-outline" id="loginBtn" onclick="location.reload()">Đăng Nhập</button>
+                <button class="btn btn-primary" id="registerBtn" onclick="document.getElementById('registerToggle').click()">Đăng Ký</button>
+            </div>
+        </div>
+    </header>

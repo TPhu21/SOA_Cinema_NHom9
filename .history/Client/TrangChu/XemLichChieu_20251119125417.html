@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineMax - Lịch Chiếu</title>
+  <style>
+    body { background-color: #221f1f; color: #fff; font-family: 'Segoe UI'; margin: 0; }
+    header, footer { background-color: #000; padding: 1rem 2rem; }
+    .container { max-width: 1200px; margin: auto; padding: 2rem; }
+    .section-title { font-size: 2rem; border-bottom: 2px solid #e50914; margin-bottom: 1.5rem; }
+    .schedule-table { width: 100%; border-collapse: collapse; background-color: rgba(255,255,255,0.05); margin-top: 1rem; }
+    .schedule-table th, .schedule-table td { padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.12); vertical-align: middle; }
+    .schedule-table th { background-color: rgba(255,255,255,0.06); color: #e50914; text-align:left; }
+    .movie-poster { width:56px; height:80px; object-fit:cover; border-radius:4px; margin-right:0.75rem; vertical-align:middle; }
+    .movie-cell { display:flex; align-items:center; gap:0.5rem; }
+    .time-button { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.12); padding:6px 10px; margin:3px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; }
+    .time-button:hover { background:#e50914; border-color:#e50914; }
+    .controls { display:flex; gap:12px; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; }
+    .date-input { padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); background:transparent; color:#fff; }
+    .btn-primary { background-color: #e50914; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-primary:hover { background-color: #b2070f; }
+    .empty { padding:2rem; text-align:center; color:#aaa; }
+    @media (max-width:720px) { .movie-poster{width:44px;height:64px} .section-title{font-size:1.4rem} }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="TrangChu.html" style="color:#e50914;font-size:1.8rem;text-decoration:none;font-weight:bold;">Cine<span style="color:#fff;">Max</span></a>
+  </header>
+
+  <main class="container">
+    <h2 class="section-title">🎟️ Lịch Chiếu</h2>
+
+    <div class="controls">
+      <label>
+        Chọn ngày:
+        <input id="datePicker" class="date-input" type="date">
+      </label>
+      <button id="refreshBtn" class="btn-primary">Tải lại</button>
+      <div id="status" style="color:#aaa;font-size:0.95rem;margin-left:8px;"></div>
+    </div>
+
+    <div id="scheduleArea">
+      <table id="scheduleTable" class="schedule-table" aria-live="polite">
+        <thead>
+          <tr>
+            <th>Phim</th>
+            <th>Rạp</th>
+            <th>Suất</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody">
+          <tr><td colspan="3" class="empty">Đang tải lịch chiếu...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer style="text-align:center;color:#757575;">
+    © 2025 CineMax. All rights reserved.
+  </footer>
+
+  <script>
+    // ⭐️ CẤU HÌNH API THẬT (Trỏ về Gateway 4000)
+    const API_GATEWAY = 'http://localhost:4000/api/movies';
+    
+    // (Vẫn giữ API Key OMDb để lấy ảnh nếu database thiếu)
+    const OMDB_KEY = 'fa85c569'; 
+    const posterCache = {};
+
+    const datePicker = document.getElementById('datePicker');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const statusEl = document.getElementById('status');
+    const scheduleBody = document.getElementById('scheduleBody');
+
+    // Mặc định chọn ngày hôm nay
+    const today = new Date().toISOString().slice(0,10);
+    datePicker.value = today;
+
+    refreshBtn.addEventListener('click', loadSchedule);
+    datePicker.addEventListener('change', loadSchedule);
+
+    // 1. Hàm gọi API lấy lịch chiếu thật
+    async function fetchShowtimes(date) {
+        try {
+            // Gọi Gateway -> MovieService
+            const res = await fetch(`${API_GATEWAY}/schedule?date=${date}`);
+            if (!res.ok) throw new Error('Không thể kết nối Server');
+            
+            const data = await res.json(); // Mảng các suất chiếu (Showtime)
+            
+            // Gom nhóm dữ liệu: Server trả về danh sách phẳng, ta cần gom theo Phim
+            return processData(data);
+
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    }
+
+    // 2. Hàm xử lý dữ liệu (Gom nhóm Suất chiếu vào từng Phim)
+    async function processData(showtimes) {
+        if (!showtimes || showtimes.length === 0) return [];
+
+        const movieMap = {};
+
+        for (const show of showtimes) {
+            const movie = show.movie;
+            if (!movie) continue;
+
+            if (!movieMap[movie.id]) {
+                // Nếu chưa có phim này trong danh sách, tạo mới
+                // Nếu DB có posterUrl thì dùng, nếu không thì tìm OMDb sau
+                let poster = movie.posterUrl;
+                if (!poster || poster.trim() === '') {
+                    poster = await fetchPosterByTitle(movie.title); 
+                }
+
+                movieMap[movie.id] = {
+                    movieId: movie.id,
+                    title: movie.title,
+                    poster: poster || 'https://via.placeholder.com/80x120?text=No+Img',
+                    genre: movie.description || 'Phim hay',
+                    cinema: show.roomId, // Tạm thời dùng roomId làm tên rạp
+                    location: 'CineMax Center',
+                    times: []
+                };
+            }
+            
+            // Thêm giờ chiếu vào phim
+            const timeStr = new Date(show.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            
+            // Lưu cả giờ và ID suất chiếu để tạo link
+            movieMap[movie.id].times.push({
+                time: timeStr,
+                showtimeId: show.id 
+            });
+        }
+
+        return Object.values(movieMap);
+    }
+    
+    // Hàm phụ: Tìm poster trên OMDb nếu DB chưa có
+    async function fetchPosterByTitle(title) {
+        if (posterCache[title]) return posterCache[title];
+        try {
+            const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_KEY}`);
+            const json = await res.json();
+            const poster = (json.Poster && json.Poster !== 'N/A') ? json.Poster : '';
+            posterCache[title] = poster;
+            return poster;
+        } catch { return ''; }
+    }
+
+    // 3. Hàm Vẽ Giao Diện (Render)
+    function renderShowRows(shows) {
+        scheduleBody.innerHTML = '';
+        if (!shows || shows.length === 0) {
+            scheduleBody.innerHTML = '<tr><td colspan="3" class="empty">Không có lịch chiếu cho ngày này.</td></tr>';
+            return;
+        }
+
+        shows.forEach(show => {
+            const tr = document.createElement('tr');
+
+            // Cột Phim
+            const movieCell = document.createElement('td');
+            movieCell.innerHTML = `
+                <div class="movie-cell">
+                    <img class="movie-poster" src="${show.poster}" alt="${show.title}">
+                    <div>
+                        <div style="font-weight:700">${show.title}</div>
+                        <div style="font-size:0.9rem;color:#bbb">${show.genre}</div>
+                    </div>
+                </div>`;
+
+            // Cột Rạp
+            const cinemaCell = document.createElement('td');
+            cinemaCell.innerHTML = `
+                <div style="font-weight:600">${show.cinema}</div>
+                <div style="color:#aaa;font-size:0.9rem">${show.location}</div>`;
+
+            // Cột Suất Chiếu (Tạo nút bấm chuyển sang DatVe.html)
+            const timesCell = document.createElement('td');
+            if (show.times.length > 0) {
+                show.times.forEach(item => {
+                    const a = document.createElement('a');
+                    a.className = 'time-button';
+                    // ⭐️ LINK SANG TRANG ĐẶT VÉ (KÈM ID SUẤT CHIẾU THẬT) ⭐️
+                    a.href = `DatVe.html?showtimeId=${item.showtimeId}`; 
+                    a.textContent = item.time;
+                    timesCell.appendChild(a);
+                });
+            } else {
+                timesCell.innerHTML = `<span style="color:#aaa">Hết suất</span>`;
+            }
+
+            tr.appendChild(movieCell);
+            tr.appendChild(cinemaCell);
+            tr.appendChild(timesCell);
+            scheduleBody.appendChild(tr);
+        });
+    }
+
+    async function loadSchedule() {
+        const date = datePicker.value || today;
+        statusEl.textContent = 'Đang tải dữ liệu thật...';
+        try {
+            const shows = await fetchShowtimes(date);
+            renderShowRows(shows);
+            statusEl.textContent = `Tìm thấy: ${shows.length} phim`;
+        } catch (err) {
+            console.error(err);
+            scheduleBody.innerHTML = '<tr><td colspan="3" class="empty">Lỗi kết nối server (4000/4002).</td></tr>';
+            statusEl.textContent = 'Lỗi';
+        }
+    }
+
+    // Chạy ngay khi vào trang
+    loadSchedule();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đang xử lý đăng nhập...</title>
+    <style>
+        body { background-color: #221f1f; color: white; font-family: Arial; text-align: center; padding-top: 100px; }
+    </style>
+</head>
+<body>
+    <h1>Đang chuyển hướng...</h1>
+    <p>Vui lòng đợi trong giây lát.</p>
+
+    <script>
+        window.onload = () => {
+            try {
+                // 1. Lấy tham số từ URL
+                const params = new URLSearchParams(window.location.search);
+                const token = params.get('token');
+                const userString = params.get('user'); 
+
+                if (token && userString) {
+                    // 2. Lưu vào localStorage
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', userString);
+                    
+                    // 3. Chuyển hướng về Trang Chủ
+                    window.location.href = 'TrangChu.html';
+                } else {
+                    // 4. Nếu lỗi, về trang đăng nhập
+                    window.location.href = 'TaiKhoan.html?error=auth_failed';
+                }
+            } catch (e) {
+                console.error('Lỗi xử lý đăng nhập:', e);
+                window.location.href = 'TaiKhoan.html?error=processing_failed';
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang Quản Trị - CinemaX</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div id="login-section" class="card">
+    <h2>Đăng nhập Admin</h2>
+    <input type="text" id="username" placeholder="Tên đăng nhập">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button id="login-btn">Đăng nhập</button>
+    <p id="login-error" class="error"></p>
+  </div>
+
+  <div id="dashboard-section" class="hidden">
+    <header>
+      <h2>Bảng điều khiển Admin</h2>
+      <button id="logout-btn">Đăng xuất</button>
+    </header>
+
+    <section>
+      <h3>Danh sách người dùng</h3>
+      <table id="user-table">
+        <thead>
+          <tr><th>ID</th><th>Tên</th><th>Email</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h3>Danh sách phim (OMDb)</h3>
+      <input type="text" id="movie-search" placeholder="Nhập tên phim...">
+      <button id="search-btn">Tìm kiếm</button>
+      <div id="movies"></div>
+    </section>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

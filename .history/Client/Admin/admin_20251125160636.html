@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMax - Quản Trị Viên</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        :root { --primary: #e50914; --dark: #0f1419; --light: #f5f5f1; --gray: #333; }
+        body { display: flex; height: 100vh; background-color: #f4f4f4; color: #333; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 250px; background-color: var(--dark); color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 1.5rem; font-size: 1.5rem; font-weight: bold; color: var(--primary); border-bottom: 1px solid #333; }
+        .menu { list-style: none; margin-top: 1rem; }
+        .menu li { padding: 1rem 1.5rem; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; }
+        .menu li:hover, .menu li.active { background-color: #222; border-left-color: var(--primary); }
+        
+        /* MAIN CONTENT */
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* DASHBOARD CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stat-card h3 { color: var(--gray); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: var(--primary); }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #eee; font-weight: 600; }
+        
+        /* FORM */
+        .form-group { margin-bottom: 1rem; }
+        .form-control { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background: var(--primary); }
+        .btn:hover { background: #b2070f; }
+        .btn-danger { background: #dc3545; padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">CineMax Admin</div>
+        <ul class="menu">
+            <li class="active" onclick="showSection('dashboard')">📊 Thống Kê</li>
+            <li onclick="showSection('movies')">🎬 Quản Lý Phim</li>
+            <li onclick="showSection('bookings')">🎟️ Đơn Hàng</li>
+            <li onclick="window.location.href='../TrangChu/TrangChu.html'" style="margin-top: auto; border-top: 1px solid #333;">🏠 Về Trang Chủ</li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        
+        <section id="dashboard" class="section active">
+            <h2 style="margin-bottom: 1.5rem;">Tổng Quan</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Tổng Doanh Thu</h3>
+                    <div class="value" id="totalRevenue">0 đ</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Vé Đã Bán</h3>
+                    <div class="value" id="totalTickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Số Phim Đang Chiếu</h3>
+                    <div class="value" id="totalMovies">0</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="movies" class="section">
+            <h2 style="margin-bottom: 1.5rem;">Quản Lý Phim</h2>
+            
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                <h3>Thêm Phim Mới</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <input type="text" id="mTitle" class="form-control" placeholder="Tên phim">
+                    <input type="text" id="mPoster" class="form-control" placeholder="Link ảnh Poster">
+                    <input type="number" id="mDuration" class="form-control" placeholder="Thời lượng (phút)">
+                    <input type="text" id="mDesc" class="form-control" placeholder="Mô tả ngắn">
+                </div>
+                <button class="btn" style="margin-top: 1rem;" onclick="addMovie()">Lưu Phim</button>
+            </div>
+
+            <h3>Danh Sách Phim</h3>
+            <table style="margin-top: 1rem;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Poster</th>
+                        <th>Tên Phim</th>
+                        <th>Thời Lượng</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="movieTableBody"></tbody>
+            </table>
+        </section>
+
+        <section id="bookings" class="section">
+            <h2 style="margin-bottom: 1.5rem;">Danh Sách Đơn Hàng</h2>
+            <button class="btn" onclick="loadBookings()" style="margin-bottom: 1rem;">Làm Mới</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ghế</th>
+                        <th>Tổng Tiền</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Tạo</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingTableBody"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        // ⭐️ CẤU HÌNH GATEWAY ⭐️
+        const GATEWAY = 'http://localhost:4000';
+
+        // --- CHUYỂN TAB ---
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu li').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+
+            if(id === 'dashboard') loadStats();
+            if(id === 'movies') loadMovies();
+            if(id === 'bookings') loadBookings();
+        }
+
+        // --- 1. LOGIC DASHBOARD & BOOKINGS ---
+        async function loadStats() {
+            try {
+                // Gọi API lấy tất cả đơn hàng (BookingService 4003)
+                const res = await fetch(`${GATEWAY}/api/bookings/all`);
+                const bookings = await res.json();
+
+                // Tính toán Client-side
+                const confirmed = bookings.filter(b => b.status === 'CONFIRMED');
+                const revenue = confirmed.reduce((sum, b) => sum + parseFloat(b.totalPrice), 0);
+                
+                document.getElementById('totalRevenue').textContent = revenue.toLocaleString('vi-VN') + ' đ';
+                document.getElementById('totalTickets').textContent = confirmed.length + ' vé';
+                
+                // Gọi API lấy phim để đếm
+                const resM = await fetch(`${GATEWAY}/api/movies`);
+                const movies = await resM.json();
+                document.getElementById('totalMovies').textContent = movies.length + ' phim';
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadBookings() {
+            const tbody = document.getElementById('bookingTableBody');
+            tbody.innerHTML = '<tr><td colspan="5">Đang tải...</td></tr>';
+            try {
+                const res = await fetch(`${GATEWAY}/api/bookings/all`);
+                const bookings = await res.json();
+                
+                tbody.innerHTML = '';
+                bookings.reverse().forEach(b => { // Mới nhất lên đầu
+                    let statusColor = b.status === 'CONFIRMED' ? 'green' : (b.status === 'PENDING' ? 'orange' : 'red');
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${b.id}</td>
+                        <td>${b.seats}</td>
+                        <td>${parseInt(b.totalPrice).toLocaleString()} đ</td>
+                        <td style="color:${statusColor}; font-weight:bold;">${b.status}</td>
+                        <td>${new Date(b.createdAt).toLocaleString('vi-VN')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // --- 2. LOGIC MOVIES ---
+        async function loadMovies() {
+            const tbody = document.getElementById('movieTableBody');
+            try {
+                const res = await fetch(`${GATEWAY}/api/movies`);
+                const movies = await res.json();
+                
+                tbody.innerHTML = '';
+                movies.forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${m.id}</td>
+                        <td><img src="${m.posterUrl}" width="50"></td>
+                        <td>${m.title}</td>
+                        <td>${m.duration} phút</td>
+                        <td><button class="btn btn-danger" onclick="deleteMovie(${m.id})">Xóa</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function addMovie() {
+            const title = document.getElementById('mTitle').value;
+            const posterUrl = document.getElementById('mPoster').value;
+            const duration = document.getElementById('mDuration').value;
+            const description = document.getElementById('mDesc').value;
+
+            if(!title) return alert('Nhập tên phim!');
+
+            try {
+                const res = await fetch(`${GATEWAY}/api/movies/create`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ title, posterUrl, duration, description })
+                });
+                if(res.ok) {
+                    alert('Thêm phim thành công!');
+                    loadMovies();
+                    loadStats();
+                } else {
+                    alert('Lỗi thêm phim');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function deleteMovie(id) {
+            if(!confirm('Bạn chắc chắn muốn xóa phim này?')) return;
+            try {
+                await fetch(`${GATEWAY}/api/movies/delete/${id}`, { method: 'DELETE' });
+                loadMovies();
+            } catch(e) { console.error(e); }
+        }
+
+        // Chạy lần đầu
+        loadStats();
+    </script>
+</body>
+</html>

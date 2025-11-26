@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMax - Hệ Thống Rạp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://static.vecteezy.com/system/resources/thumbnails/006/240/302/small/abstract-soft-focus-sunset-field-landscape-of-yellow-flowers-and-grass-meadow-warm-golden-hour-sunset-sunrise-time-tranquil-spring-summer-nature-closeup-and-blurred-forest-background-idyllic-nature-photo.jpg') center/cover fixed;
+            background-attachment: fixed;
+        }
+
+        main.container {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    
+    <header>
+        <div class="header-container">
+            <a href="TrangChu.html" class="logo">Cine<span>Max</span></a>
+            
+            <ul class="nav-menu">
+                <li><a href="TrangChu.html">Trang Chủ</a></li>
+                <li><a href="Phim.html">Phim</a></li>
+                <li><a href="RapChieu.html">Rạp Chiếu</a></li>
+                <li><a href="KhuyenMai.html">Khuyến Mãi</a></li>
+                <li><a href="LienHe.html">Liên Hệ</a></li>
+                <li><a href="DangKyThanhVien.html">Đăng ký hội viên</a></li>
+            </ul>
+            
+            <div class="user-actions">
+                <button class="btn btn-outline" id="loginBtn" onclick="redirectToTaiKhoan()">Đăng Nhập</button>
+                <button class="btn btn-primary" id="registerBtn" onclick="redirectToTaiKhoan()">Đăng Ký</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1 class="page-title">Hệ Thống Rạp CineMax</h1>
+
+        <div class="filter-container">
+            <div class="filter-buttons" id="filter-buttons">
+                <button class="filter-btn active" data-city="all">Tất Cả</button>
+            </div>
+        </div>
+
+        <div class="cinema-list" id="cinema-list">
+            <p style="text-align: center; grid-column: 1 / -1; color: var(--gray);">Đang tải danh sách rạp...</p>
+        </div>
+    </main>
+
+    <div id="showtime-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close-btn">&times;</button>
+            <h2 id="modal-cinema-name"></h2>
+            <div id="modal-movie-list"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="GioiThieu.html">Giới thiệu</a>
+                <a href="DieuKhoanSuDung.html">Điều khoản sử dụng</a>
+                <a href="ChinhSachBaoMat.html">Chính sách bảo mật</a>
+                <a href="CauHoiThuongGap.html">Câu hỏi thường gặp</a>
+                <a href="LienHe.html">Liên hệ</a>
+            </div>
+            <p class="copyright">© 2025 CineMax. Tất cả các quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            /* ===== AUTH UI ===== */
+            function parseJwt(token) {
+              try {
+                const payload = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+                const json = decodeURIComponent(atob(payload).split('').map(c => '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                return JSON.parse(json);
+              } catch (e) { return null; }
+            }
+
+            function getStoredToken() {
+              return localStorage.getItem('adminToken') || localStorage.getItem('token') || null;
+            }
+
+            function logout() {
+              localStorage.removeItem('adminToken');
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              window.location.href = 'RapChieu.html';
+            }
+
+            function buildAuthUIFromToken(token) {
+              const payload = parseJwt(token) || {};
+              const name = payload.username || payload.name || payload.email || '';
+              const initials = (name || '').split(' ').filter(Boolean).map(s => s[0]).join('').slice(0,2).toUpperCase() ||
+                               (payload.email ? payload.email[0].toUpperCase() : 'U');
+
+              const wrap = document.createElement('div');
+              wrap.className = 'auth-wrap';
+
+              const avatarBtn = document.createElement('button');
+              avatarBtn.className = 'avatar-btn';
+              avatarBtn.title = name || 'Tài khoản';
+              avatarBtn.innerHTML = `<span class="avatar-initials">${initials}</span>`;
+              avatarBtn.addEventListener('click', () => { window.location.href = 'ThongTinCaNhan.html'; });
+
+              const profileLink = document.createElement('a');
+              profileLink.className = 'auth-action';
+              profileLink.href = 'ThongTinCaNhan.html';
+              profileLink.textContent = 'Hồ sơ';
+
+              const logoutBtn = document.createElement('button');
+              logoutBtn.className = 'auth-action';
+              logoutBtn.textContent = 'Đăng xuất';
+              logoutBtn.addEventListener('click', logout);
+
+              wrap.appendChild(avatarBtn);
+              wrap.appendChild(profileLink);
+              wrap.appendChild(logoutBtn);
+
+              return wrap;
+            }
+
+            function restoreDefaultAuthButtons(container) {
+              container.innerHTML = '';
+              const loginBtn = document.createElement('button');
+              loginBtn.className = 'btn btn-outline';
+              loginBtn.id = 'loginBtn';
+              loginBtn.textContent = 'Đăng Nhập';
+              loginBtn.onclick = redirectToTaiKhoan;
+
+              const registerBtn = document.createElement('button');
+              registerBtn.className = 'btn btn-primary';
+              registerBtn.id = 'registerBtn';
+              registerBtn.textContent = 'Đăng Ký';
+              registerBtn.onclick = redirectToTaiKhoan;
+
+              container.appendChild(loginBtn);
+              container.appendChild(registerBtn);
+            }
+
+            function updateAuthUI() {
+              const token = getStoredToken();
+              const userActions = document.querySelectorAll('.user-actions');
+              if (!userActions) return;
+              userActions.forEach(container => {
+                if (token) {
+                  container.innerHTML = '';
+                  const authUI = buildAuthUIFromToken(token);
+                  container.appendChild(authUI);
+                } else {
+                  restoreDefaultAuthButtons(container);
+                }
+              });
+            }
+
+            function redirectToTaiKhoan() {
+              window.location.href = 'TaiKhoan.html';
+            }
+
+            window.addEventListener('storage', (e) => {
+              if (e.key === 'adminToken' || e.key === 'token') updateAuthUI();
+            });
+
+            /* ===== CINEMA PAGE LOGIC ===== */
+            
+            const cinemaList = document.getElementById('cinema-list');
+            const filterButtons = document.getElementById('filter-buttons');
+            const modal = document.getElementById('showtime-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalCinemaName = document.getElementById('modal-cinema-name');
+            const modalMovieList = document.getElementById('modal-movie-list');
+            
+            let allCinemaCards = [];
+            let allCinemasData = [];
+            const API_BASE_URL = 'http://localhost:3000/api';
+
+            async function fetchCinemas() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/cinemas`);
+                    if (!response.ok) throw new Error('Không thể tải dữ liệu rạp.');
+                    
+                    allCinemasData = await response.json();
+                    displayCinemas(allCinemasData);
+                    setupFilters(allCinemasData);
+                } catch (error) {
+                    console.error(error);
+                    cinemaList.innerHTML = `<p style="color: var(--primary); text-align: center; grid-column: 1 / -1;">${error.message}</p>`;
+                }
+            }
+
+            function displayCinemas(cinemas) {
+                cinemaList.innerHTML = ''; 
+                cinemas.forEach(cinema => {
+                    const card = document.createElement('div');
+                    card.className = 'cinema-card';
+                    card.setAttribute('data-city', cinema.city);
+                    card.dataset.id = cinema.id;
+                    
+                    card.innerHTML = `
+                        <img src="${cinema.imageUrl || 'https://via.placeholder.com/400x200?text=CineMax'}" alt="${cinema.name}">
+                        <div class="cinema-info">
+                            ${cinema.brand ? `<span class="brand">${cinema.brand}</span>` : ''}
+                            <h3>${cinema.name}</h3>
+                            <p>${cinema.address}</p>
+                        </div>
+                    `;
+                    cinemaList.appendChild(card);
+                });
+                allCinemaCards = document.querySelectorAll('.cinema-card');
+            }
+
+            function setupFilters(allCinemas) {
+                const cities = [...new Set(allCinemas.map(c => c.city))].sort();
+                cities.forEach(city => {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn';
+                    button.setAttribute('data-city', city);
+                    button.textContent = city;
+                    filterButtons.appendChild(button);
+                });
+
+                filterButtons.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        filterButtons.querySelector('.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        filterCinemas(e.target.getAttribute('data-city'));
+                    }
+                });
+            }
+
+            function filterCinemas(city) {
+                allCinemaCards.forEach(card => {
+                    if (city === 'all' || card.getAttribute('data-city') === city) {
+                        card.classList.remove('hide');
+                    } else {
+                        card.classList.add('hide');
+                    }
+                });
+            }
+
+            function bookTicket(showtimeId, movieTitle, cinemaName, time) {
+                // Chuyển hướng đến trang đặt vé với thông tin suất chiếu
+                window.location.href = `DatVe.html?showtimeId=${showtimeId}&title=${encodeURIComponent(movieTitle)}&cinema=${encodeURIComponent(cinemaName)}&time=${encodeURIComponent(time)}`;
+            }
+
+            cinemaList.addEventListener('click', (e) => {
+                const card = e.target.closest('.cinema-card');
+                if (card && card.dataset.id) {
+                    const cinemaId = card.dataset.id;
+                    const cinemaName = allCinemasData.find(c => c.id == cinemaId)?.name;
+                    showShowtimeModal(cinemaId, cinemaName);
+                }
+            });
+
+            async function showShowtimeModal(cinemaId, cinemaName) {
+                if (!modal) return;
+                
+                modalCinemaName.textContent = cinemaName || 'Đang tải...';
+                modalMovieList.innerHTML = '<p style="text-align: center; color: var(--gray);">Đang tải suất chiếu...</p>';
+                modal.style.display = 'flex';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/showtimes/by-cinema/${cinemaId}`);
+                    if (!response.ok) throw new Error('Không thể tải suất chiếu.');
+                    
+                    const showtimeData = await response.json();
+                    modalMovieList.innerHTML = ''; 
+                    
+                    if (showtimeData.length === 0) {
+                        modalMovieList.innerHTML = '<p style="text-align: center; color: var(--gray);">Rạp này hiện chưa có suất chiếu.</p>';
+                        return;
+                    }
+
+                    showtimeData.forEach(item => {
+                        const movieEl = document.createElement('div');
+                        movieEl.className = 'modal-movie-item';
+                        
+                        const showtimeButtons = item.showtimes.map(showtime => 
+                            `<button class="showtime-btn" onclick="bookTicket(${showtime.id}, '${item.title}', '${cinemaName}', '${showtime.time}')">${showtime.time}</button>`
+                        ).join('');
+
+                        movieEl.innerHTML = `
+                            <img src="${item.posterUrl || 'https://via.placeholder.com/100x150'}" alt="${item.title}">
+                            <div class="modal-movie-info">
+                                <h4>${item.title}</h4>
+                                <p>Thời lượng: ${item.duration || 'N/A'} phút</p>
+                                <div class="showtime-buttons">
+                                    ${showtimeButtons}
+                                </div>
+                            </div>
+                        `;
+                        modalMovieList.appendChild(movieEl);
+                    });
+
+                } catch (error) {
+                    modalMovieList.innerHTML = `<p style="color: var(--primary); text-align: center;">${error.message}</p>`;
+                }
+            }
+
+            if (modalCloseBtn) {
+                modalCloseBtn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+            }
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+
+            // Initialize
+            updateAuthUI();
+            fetchCinemas();
+        });
+    </script>
+
+</body>
+</html>
