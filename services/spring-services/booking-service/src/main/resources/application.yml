@@ -1,0 +1,39 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: booking-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/cinemax_bookings
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update          #  update schema tự động
+    show-sql: true              # in SQL ra console cho dễ debug
+    properties:
+      hibernate:
+        format_sql: true        # format SQL cho đẹp
+  data:
+    redis:
+      host: localhost
+      port: 6379
+cinema:
+  service:
+    url: http://localhost:8080
+showtime:
+  service:
+    url: http://localhost:8080
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+  cloud:
+    discovery:
+      enabled: false

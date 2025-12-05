@@ -76,6 +76,8 @@
         </div>
     </footer>
 
+    <script src="config.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -183,14 +185,24 @@
             
             let allCinemaCards = [];
             let allCinemasData = [];
-            const API_BASE_URL = 'http://localhost:3000/api';
+            // const API_BASE_URL = 'http://localhost:3000/api';
 
             async function fetchCinemas() {
                 try {
                     const response = await fetch(`${API_BASE_URL}/cinemas`);
                     if (!response.ok) throw new Error('Không thể tải dữ liệu rạp.');
                     
-                    allCinemasData = await response.json();
+                    let data = await response.json();
+                    //map sang object FE
+                    data = data.map(c => ({
+                        id: c.cinemaId,
+                        name: c.cinemaName,
+                        address: c.cinemaAddress,
+                        city: c.cinemaCity,
+                        brand: c.brand || 'CineMax',
+                        imageUrl: c.imageUrl || null
+                    }))
+                    allCinemasData = data
                     displayCinemas(allCinemasData);
                     setupFilters(allCinemasData);
                 } catch (error) {

@@ -103,26 +103,28 @@
         <div id="error" style="display:none" class="error"></div>
     </main>
 
+    <script src="config.js"></script>
+
     <script>
+        const BASE_URL = window.API_BASE_URL || 'http://localhost:8080/api';
+
         const YT_API_KEY = 'AIzaSyClS7QXw9qktL4tEQC2qXCBdncSBvzwCP8';
-         const API_KEY = 'fa85c569'; 
-         const BASE_URL = 'https://www.omdbapi.com/';
+
+        let currentMovieTitle = '';
 
         function getQueryParam(name) {
             const params = new URLSearchParams(window.location.search);
             return params.get(name);
         }
 
-        async function fetchMovie(imdbID) {
-            try {
-                const res = await fetch(`${BASE_URL}?i=${encodeURIComponent(imdbID)}&plot=full&apikey=${API_KEY}`);
-                if (!res.ok) throw new Error('Network response not ok');
-                const data = await res.json();
-                if (data.Response === 'False') throw new Error(data.Error || 'Không có dữ liệu');
-                return data;
-            } catch (err) {
-                throw err;
+        // ---- GỌI MOVIESERVICE QUA GATEWAY ----
+        async function fetchMovieById(movieId) {
+            const url = `${BASE_URL}/movies/${encodeURIComponent(movieId)}`;
+            const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error('HTTP ' + res.status);
             }
+            return await res.json();
         }
 
         function showError(msg) {
@@ -137,44 +139,102 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
 
-            const poster = (data.Poster && data.Poster !== 'N/A') ? data.Poster : 'https://via.placeholder.com/500x750/1a2a3a/ffffff?text=No+Image';
+            // Map field giữa DB và UI (tolerant cả dữ liệu OMDb nếu sau này có)
+            const title = data.title || data.Title || 'N/A';
+            const year = data.year || data.Year || '';
+            const description = data.description || data.Plot || 'Chưa có mô tả.';
+            const duration = data.duration
+                ? `${data.duration} phút`
+                : (data.Runtime || '');
+            const rating = data.rating || data.imdbRating || 'N/A';
+            const director = data.director || data.Director || 'N/A';
+            const actors = data.actors || data.Actors || 'N/A';
+            const genre = data.genre || data.Genre || 'N/A';
+
+            let poster = data.posterUrl || data.Poster;
+            if (!poster || poster === 'N/A') {
+                poster = 'Anh.jpg'; // ảnh local của bạn
+            }
+
+            // Gán lên UI
             document.getElementById('poster').src = poster;
-            document.getElementById('poster').alt = data.Title || 'Poster';
+            document.getElementById('poster').alt = title;
 
-            document.getElementById('title').textContent = `${data.Title || 'N/A'} (${data.Year || 'N/A'})`;
-            document.getElementById('meta').innerHTML = `<span class="tag">IMDb: ${data.imdbRating || 'N/A'}</span><span class="tag">${data.Runtime || 'N/A'}</span><span class="tag">${data.Rated || ''}</span>`;
+            document.getElementById('title').textContent =
+                year ? `${title} (${year})` : title;
 
-            document.getElementById('plot').textContent = data.Plot && data.Plot !== 'N/A' ? data.Plot : 'Chưa có mô tả.';
-            document.getElementById('director').textContent = `Đạo diễn: ${data.Director || 'N/A'}`;
-            document.getElementById('actors').textContent = `Diễn viên: ${data.Actors || 'N/A'}`;
-            document.getElementById('genre').textContent = `Thể loại: ${data.Genre || 'N/A'}`;
+            document.getElementById('meta').innerHTML = `
+      <span class="tag">Đánh giá: ${rating}</span>
+      ${duration ? `<span class="tag">${duration}</span>` : ''}
+    `;
 
+            document.getElementById('plot').textContent = description;
+            document.getElementById('director').textContent = `Đạo diễn: ${director}`;
+            document.getElementById('actors').textContent = `Diễn viên: ${actors}`;
+            document.getElementById('genre').textContent = `Thể loại: ${genre}`;
+
+            // Tags phụ (ngôn ngữ, quốc gia, giải thưởng... nếu có)
             const tagsContainer = document.getElementById('tags');
             tagsContainer.innerHTML = '';
-            if (data.Language && data.Language !== 'N/A') tagsContainer.insertAdjacentHTML('beforeend', `<div class="tag">${data.Language}</div>`);
-            if (data.Country && data.Country !== 'N/A') tagsContainer.insertAdjacentHTML('beforeend', `<div class="tag">${data.Country}</div>`);
-            if (data.Awards && data.Awards !== 'N/A') tagsContainer.insertAdjacentHTML('beforeend', `<div class="tag">${data.Awards}</div>`);
 
+            if (data.Language && data.Language !== 'N/A') {
+                tagsContainer.insertAdjacentHTML(
+                    'beforeend',
+                    `<div class="tag">${data.Language}</div>`
+                );
+            }
+            if (data.Country && data.Country !== 'N/A') {
+                tagsContainer.insertAdjacentHTML(
+                    'beforeend',
+                    `<div class="tag">${data.Country}</div>`
+                );
+            }
+            if (data.Awards && data.Awards !== 'N/A') {
+                tagsContainer.insertAdjacentHTML(
+                    'beforeend',
+                    `<div class="tag">${data.Awards}</div>`
+                );
+            }
+
+            // Nút Đặt vé: dùng ID trong DB (hoặc param trên URL)
+            const movieId = data.id || getQueryParam('movie');
             const buyBtn = document.getElementById('buyBtn');
-            buyBtn.href = `DatVe.html?movieId=${encodeURIComponent(data.imdbID)}&title=${encodeURIComponent(data.Title)}`;
+            buyBtn.href =
+                `DatVe.html?movieId=${encodeURIComponent(movieId)}&title=${encodeURIComponent(title)}`;
 
-            document.getElementById('openTrailer').onclick = () => playTrailer(data.Title);
-         }
+            // Lưu lại title để dùng cho trailer
+            currentMovieTitle = title;
+        }
 
-         (async function init() {
-             const imdbID = getQueryParam('movie');
-             if (!imdbID) {
-                 showError('Không tìm thấy mã phim. Vui lòng chọn phim từ trang danh sách.');
-                 return;
-             }
-             try {
-                 const movie = await fetchMovie(imdbID);
-                 renderMovie(movie);
-             } catch (err) {
-                 console.error(err);
-                 showError('Lỗi khi tải thông tin phim: ' + (err.message || 'Không xác định'));
-             }
-         })();
+        // ---- Khởi tạo trang ----
+        async function init() {
+            const movieId = getQueryParam('movie'); // vd: ?movie=1
+            if (!movieId) {
+                showError('Không tìm thấy mã phim. Vui lòng chọn phim từ trang danh sách.');
+                return;
+            }
+
+            try {
+                const movie = await fetchMovieById(movieId);
+                renderMovie(movie);
+            } catch (err) {
+                console.error(err);
+                showError('Lỗi khi tải thông tin phim: ' + (err.message || 'Không xác định'));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+
+            // Gán handler cho nút trailer sau khi DOM sẵn sàng
+            document.getElementById('openTrailer').onclick = () => {
+                if (!currentMovieTitle) {
+                    alert('Chưa có thông tin tiêu đề phim.');
+                    return;
+                }
+                playTrailer(currentMovieTitle);
+            };
+        });
 
         async function playTrailer(title) {
             const q = encodeURIComponent(`${title} trailer official`);
@@ -189,11 +249,15 @@
                     return;
                 }
                 const vid = item.id.videoId;
-                const iframe = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;left:0;top:0;width:100%;height:100%;"></iframe>`;
+                const iframe = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&rel=0"
+                           frameborder="0"
+                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                           allowfullscreen
+                           style="position:absolute;left:0;top:0;width:100%;height:100%;"></iframe>`;
                 document.getElementById('trailerContainer').innerHTML = iframe;
                 const modal = document.getElementById('trailerModal');
                 modal.style.display = 'flex';
-                modal.setAttribute('aria-hidden','false');
+                modal.setAttribute('aria-hidden', 'false');
             } catch (e) {
                 console.error(e);
                 alert('Lỗi khi tải trailer.');
@@ -204,17 +268,17 @@
             const modal = document.getElementById('trailerModal');
             document.getElementById('trailerContainer').innerHTML = '';
             modal.style.display = 'none';
-            modal.setAttribute('aria-hidden','true');
+            modal.setAttribute('aria-hidden', 'true');
         }
 
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeTrailer();
         });
 
-        document.getElementById('trailerModal').addEventListener('click', function(e) {
-
+        document.getElementById('trailerModal').addEventListener('click', function (e) {
             if (e.target && e.target.id === 'trailerModal') closeTrailer();
         });
     </script>
+
 </body>
 </html>

@@ -1,0 +1,58 @@
+package com.example.bookingservice.entity;
+
+
+import com.example.bookingservice.enums.BookingStatus;
+import com.example.bookingservice.enums.PaymentMethod;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Table (name = "bookings")
+@Data
+@Builder
+@FieldDefaults (level = AccessLevel.PRIVATE)
+public class Booking {
+    @Id
+    @GeneratedValue (strategy = GenerationType.IDENTITY )
+    Long bookingId;
+    String userId;
+    Long showTimeId;
+    BigDecimal totalPrice;
+
+    @ElementCollection // Tạo bảng mới độc lập trong DB
+    @CollectionTable(name = "booking_seats", joinColumns = @JoinColumn(name = "booking_id"))
+    @Column(name =  "seat_code")// Giá trị của List<>
+    List<String>  seats;
+    LocalDateTime createTime;
+    LocalDateTime updateTime;
+    Integer quantity;
+
+    @Enumerated (EnumType.STRING)
+    BookingStatus bookingStatus;
+    @Enumerated (EnumType.STRING)
+    PaymentMethod paymentMethod;
+
+    @PrePersist
+    void prePersist() {
+        this.createTime = LocalDateTime.now();
+        this.updateTime = this.createTime;
+        if (this.bookingStatus == null) {
+            this.bookingStatus = BookingStatus.PENDING;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        this.updateTime = LocalDateTime.now();
+    }
+
+
+}

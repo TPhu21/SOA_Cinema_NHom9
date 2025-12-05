@@ -1,0 +1,25 @@
+// config/db.js
+const { Sequelize } = require('sequelize');
+require('dotenv').config();
+
+const sequelize = new Sequelize(
+  process.env.DB_DATABASE,
+  process.env.DB_USERNAME,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'mysql',
+    logging: false, 
+  }
+);
+
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Kết nối MySQL thành công (Sequelize)');
+  } catch (error) {
+    console.error('❌ Lỗi kết nối MySQL:', error.message);
+  }
+})();
+
+module.exports = sequelize;
