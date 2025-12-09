@@ -1,9 +1,9 @@
 
 // services/PaymentService/controllers/paymentController.js
-const paymentService = require('../services/paymentService'); // 👈 SỬA LẠI: Gọi "Nghiệp vụ" CỦA CHÍNH NÓ
+const paymentService = require('../services/paymentService');
 
-// API nội bộ (BookingService 4003 sẽ gọi)
-exports.createPaymentLink = async (req, res) => {
+
+exports.createPaymentLinkApi = async (req, res) => {
     
     console.log("[CONTROLLER 8004] 💡: Đã vào hàm createPaymentLink.");
 
@@ -40,6 +40,20 @@ exports.momoCallback = async (req, res) => {
     }
 };
 
+exports.zalopayCallback = async (req, res) => {
+    console.log("--- [WEBHOOK] Nhận Callback từ ZaloPay ---");
+    try {
+        // ZaloPay bắn dữ liệu qua Body (POST) dạng: { data: "...", mac: "..." }
+        const result = await paymentService.processZalopayCallback(req.body);
+
+        // ZaloPay yêu cầu trả về JSON đúng định dạng này:
+        res.json(result);
+    } catch (error) {
+        console.error("Lỗi callback ZaloPay:", error.message);
+        // Trả về lỗi để ZaloPay biết (return_code = 0)
+        res.json({ return_code: 0, return_message: error.message });
+    }
+};
 // API công khai (Gateway sẽ chuyển từ Ngrok)
 exports.vnpayCallback = async (req, res) => {
     try {
@@ -52,7 +66,19 @@ exports.vnpayCallback = async (req, res) => {
         res.json({ RspCode: '97', Message: 'error' });
     }
 };
+exports.vietqrCallback = async (req, res) => {
+    console.log("--- [WEBHOOK] Nhận biến động số dư từ Casso/VietQR ---");
+    try {
+        // Casso gửi data trong body, và token trong headers
+        await paymentService.processVietQRCallback(req.body, req.headers);
 
+        // Luôn trả về success để bên Casso biết mình đã nhận tin
+        res.json({ error: 0, message: 'Success' });
+    } catch (error) {
+        console.error("Lỗi xử lý VietQR:", error.message);
+        res.json({ error: 1, message: 'Error' });
+    }
+};
 // API công khai (Gateway sẽ chuyển từ Client 5173)
 exports.getPaymentStatus = async (req, res) => {
      try {

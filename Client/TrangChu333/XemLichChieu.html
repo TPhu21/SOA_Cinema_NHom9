@@ -67,8 +67,9 @@
       const API_KEY = 'fa85c569';           // OMDb (chỉ dùng để fill poster, optional)
       const BASE_URL = 'https://www.omdbapi.com/';
 
+      let posterCache = {};
 
-    const datePicker = document.getElementById('datePicker');
+      const datePicker = document.getElementById('datePicker');
     const refreshBtn = document.getElementById('refreshBtn');
     const statusEl = document.getElementById('status');
     const scheduleBody = document.getElementById('scheduleBody');

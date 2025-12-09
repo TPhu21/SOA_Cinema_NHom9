@@ -8,12 +8,14 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-
+@Builder
 @Data
 public class BookingRequest {
     BigDecimal totalPrice;
-    List<String> seatCodes;
+    @Builder.Default
+    List<String> seatCodes = new ArrayList<>();
     PaymentMethod paymentMethod;
     Long showTimeId;
     String userId;

@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,8 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @Table (name = "bookings")
 @Data
-@Builder
-@FieldDefaults (level = AccessLevel.PRIVATE)
+@Builder // để tạo builder mới khi cần@FieldDefaults (level = AccessLevel.PRIVATE)
 public class Booking {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY )
@@ -27,10 +27,10 @@ public class Booking {
     Long showTimeId;
     BigDecimal totalPrice;
 
-    @ElementCollection // Tạo bảng mới độc lập trong DB
-    @CollectionTable(name = "booking_seats", joinColumns = @JoinColumn(name = "booking_id"))
-    @Column(name =  "seat_code")// Giá trị của List<>
-    List<String>  seats;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "booking_seats", joinColumns = @JoinColumn(name = "booking_id", nullable = false))
+    @Column(name =  "seat_code", nullable = false)// Giá trị của List<>
+    private List<String> seats = new ArrayList<>();
     LocalDateTime createTime;
     LocalDateTime updateTime;
     Integer quantity;

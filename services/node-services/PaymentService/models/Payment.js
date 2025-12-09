@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     provider: {
       type: DataTypes.STRING,
-      defaultValue: 'momo'
+      defaultValue: 'cash'
     },
     transId: {
       type: DataTypes.STRING, 

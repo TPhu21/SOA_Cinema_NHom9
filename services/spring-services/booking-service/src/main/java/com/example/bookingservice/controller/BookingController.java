@@ -73,32 +73,45 @@ public class BookingController {
 
     //Confirm
     @PostMapping("/pending")
-    ResponseEntity<?> pendingBooking(@RequestBody BookingRequest request){
+    ResponseEntity<String> pendingBooking(@RequestBody BookingRequest request){
         try {
-            //ghi giao dịch vĩnh viễn
+            // Ghi giao dịch vĩnh viễn
             BookingResponse response = bookingManagementService.createBooking(request);
 
-            return ResponseEntity.ok(response);
+            // Trả về kết quả tối thiểu để Frontend xử lý tiếp (Chỉ cần ID và Status 200)
+            // Nếu bạn muốn gửi ID booking về FE, hãy dùng:
+            return ResponseEntity.ok(
+                    "{\"bookingId\":" + response.getBookingId() + "}"
+            );
+
         } catch (IllegalStateException e) {
-            // Bắt lỗi hết hạn giữ chỗ hoặc lỗi thanh toán
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Lỗi server khi tạo vé chờ: " + e.getMessage());
         }
     }
 
     //Liên quan đến node
 
     @PostMapping("/update-status")
-    public ResponseEntity<BookingResponse> updateBookingStatus(
-            @RequestBody UpdateBookingStatusRequest request) { // DTO: bookingId và status mới
+// ⚠️ THAY ĐỔI: Thay ResponseEntity<BookingResponse> thành ResponseEntity<String>
+    public ResponseEntity<String> updateBookingStatus(
+            @RequestBody UpdateBookingStatusRequest request) {
         try {
-            BookingResponse response = bookingManagementService.updateBookingStatus(
+            // Vẫn gọi Service để update, nhưng KHÔNG CẦN hứng kết quả trả về
+            bookingManagementService.updateBookingStatus(
                     request.getBookingId(),
                     request.getStatus()
             );
-            return ResponseEntity.ok(response);
+
+            // Trả về HTTP 200 (OK) với một thông báo đơn giản (hoặc không cần body)
+            return ResponseEntity.ok("Booking status updated successfully.");
+
         } catch (RuntimeException e) {
-            // Log lỗi chi tiết tại đây
-            return ResponseEntity.badRequest().body(null);
+            // Giữ nguyên đoạn này để debug logic
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Error updating booking status: " + e.getMessage());
         }
     }
     @GetMapping("/{bookingId}")

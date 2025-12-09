@@ -41,54 +41,51 @@ public class BookingManagementService {
         String userId = request.getUserId();
         List<String> seats = request.getSeatCodes();
 
-        //Check seat
+        // 1. Validate
+        if (seats == null || seats.isEmpty()) {
+            throw new IllegalStateException("Vui lòng chọn ít nhất một ghế.");
+        }
+
+        // 2. Check quyền sở hữu trong Redis (Re-entrant check)
         for(String seat : seats){
-            String key = REDIS_HOLD_PREFIX+ showId + ":" + seat;
+            String key = REDIS_HOLD_PREFIX + showId + ":" + seat;
             String hoderValue = redisTemplate.opsForValue().get(key);
+            // Nếu không có key hoặc key không phải của user này -> Lỗi
             if(hoderValue == null || !hoderValue.startsWith(userId)){
                 throw new RuntimeException("Hết hạn xác nhận, hoặc ghế đã bị giữ bởi người khác");
             }
         }
-        // 2. Lấy seatmap hiện tại để tính lại totalPrice
-        SeatMapResponse seatMap = seatMapService.getSeatMap(showId);
 
+        // 3. Tính lại tổng tiền từ Server (Bảo mật giá)
+        SeatMapResponse seatMap = seatMapService.getSeatMap(showId);
         Map<String, SeatResponse> seatMapByCode = seatMap.getSeats()
                 .stream()
                 .collect(Collectors.toMap(SeatResponse::getSeatCode, s -> s));
 
-        BigDecimal totalPrice = seats
-                .stream()
+        BigDecimal totalPrice = seats.stream()
                 .map(code -> {
                     SeatResponse s = seatMapByCode.get(code);
-                    if (s == null) {
-                        throw new IllegalStateException("Ghế " + code + " không tồn tại trong layout.");
-                    }
+                    if (s == null) throw new IllegalStateException("Ghế " + code + " không hợp lệ.");
                     return s.getPrice();
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        // 3. Tạo Booking
+
+        // 4. Tạo và Lưu Booking (QUAN TRỌNG: Lưu DB trước)
         Booking booking = Booking.builder()
                 .showTimeId(showId)
                 .userId(userId)
-                .seats(new ArrayList<>(seats))
+                .seats(request.getSeatCodes()) // Truyền list ghế
+                .quantity(seats.size())
                 .totalPrice(totalPrice)
                 .bookingStatus(BookingStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
                 .createTime(LocalDateTime.now())
                 .build();
 
-
-
-        //Delete key redis
-        for(String seat : seats){
-            redisTemplate.delete(REDIS_HOLD_PREFIX + showId + ":" + seat);
-        }
-
+        // Lưu xuống DB. Nếu lỗi tại đây -> Transaction rollback -> Redis vẫn còn nguyên (An toàn)
         booking = bookingRepository.saveAndFlush(booking);
         return bookingMapper.toBookingResponse(booking);
-
     }
-
     // Hàm tiện ích để cập nhật trạng thái
     public BookingResponse updateBookingStatus(Long bookingId, BookingStatus newStatus) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -104,9 +101,12 @@ public class BookingManagementService {
         // 3. Cập nhật trạng thái và thời gian update
         booking.setBookingStatus(newStatus);
         booking.setUpdateTime(LocalDateTime.now());
-
-        booking.setBookingStatus(newStatus);
         booking = bookingRepository.save(booking);
+        if (newStatus == BookingStatus.CONFIRMED || newStatus == BookingStatus.CANCELLED) {
+            for (String seat : booking.getSeats()) {
+                redisTemplate.delete(REDIS_HOLD_PREFIX + booking.getShowTimeId() + ":" + seat);
+            }
+        }
         return bookingMapper.toBookingResponse(booking);
     }
 

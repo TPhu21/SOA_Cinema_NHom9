@@ -61,20 +61,33 @@ public class SeatMapService {
         // 2. Lấy layout ghế
         CinemaSeatLayoutResponse layout = cinemaClient.getSeatLayout(roomId);
 
-        // 3. Ghế đã SOLD
-        List<Booking> confirmedBookings =
-                bookingRepository.findByShowTimeIdAndBookingStatus(showId, BookingStatus.CONFIRMED);
-        Set<String> soldSeatCodes = confirmedBookings.stream()
+        // 3. Lấy TẤT CẢ booking chưa hủy (Gồm cả CONFIRMED và PENDING)
+        // Lưu ý: Bạn cần thêm hàm findByShowTimeIdAndBookingStatusNot vào BookingRepository
+        List<Booking> activeBookings = bookingRepository.findByShowTimeIdAndBookingStatusNot(showId, BookingStatus.CANCELLED);
+
+        // Tách ra: Ghế đã bán cứng (CONFIRMED)
+        Set<String> soldSeatCodes = activeBookings.stream()
+                .filter(b -> b.getBookingStatus() == BookingStatus.CONFIRMED)
                 .flatMap(b -> b.getSeats().stream())
                 .collect(Collectors.toSet());
 
-        // 4. Ghế đang HELD (từ Redis)
-        Set<String> heldSeatCodes = findHeldSeatsFromRedis(showId);
+        // Tách ra: Ghế đang chờ thanh toán (PENDING)
+        Set<String> pendingSeatCodes = activeBookings.stream()
+                .filter(b -> b.getBookingStatus() == BookingStatus.PENDING)
+                .flatMap(b -> b.getSeats().stream())
+                .collect(Collectors.toSet());
 
-        // 5. Map từng seat
+        // 4. Ghế đang giữ tạm bằng Redis (User đang click chọn nhưng chưa bấm thanh toán)
+        Set<String> redisHeldSeatCodes = findHeldSeatsFromRedis(showId);
+
+        // Gộp ghế Pending và ghế Redis lại thành nhóm "Đang bị khóa"
+        Set<String> lockedSeatCodes = new java.util.HashSet<>(pendingSeatCodes);
+        lockedSeatCodes.addAll(redisHeldSeatCodes);
+
+        // 5. Map từng seat (Truyền sold và locked vào)
         List<SeatResponse> seatList = layout.getSeats()
                 .stream()
-                .map(item -> mapSeat(item, soldSeatCodes, heldSeatCodes, showDate, startTime))
+                .map(item -> mapSeat(item, soldSeatCodes, lockedSeatCodes, showDate, startTime))
                 .toList();
 
         return SeatMapResponse.builder()
@@ -84,22 +97,27 @@ public class SeatMapService {
                 .rowCount(layout.getRowCount())
                 .colCount(layout.getColCount())
                 .build();
-
     }
     SeatResponse mapSeat(CinemaSeatLayoutItem s,
                          Set<String> soldSeatCodes,
-                         Set<String> heldSeatCodes,
+                         Set<String> lockedSeatCodes, // Tham số này thay cho heldSeatCodes cũ
                          LocalDate showDate,
                          LocalTime startTime) {
 
         String seatCode = s.getSeatCode();
         SeatType seatType = s.getSeatType();
         SeatStatus status;
+
+        // Ưu tiên 1: Đã bán -> BOOKED
         if (soldSeatCodes.contains(seatCode)) {
             status = SeatStatus.BOOKED;
-        } else if (heldSeatCodes.contains(seatCode)) {
-            status = SeatStatus.RESERVED;
-        } else {
+        }
+        // Ưu tiên 2: Đang giữ (Redis) hoặc Đang chờ thanh toán (Pending) -> LOCKED (hoặc RESERVED)
+        else if (lockedSeatCodes.contains(seatCode)) {
+            status = SeatStatus.RESERVED; // Bạn cần thêm giá trị LOCKED vào Enum SeatStatus, hoặc dùng RESERVED
+        }
+        // Còn lại là trống
+        else {
             status = SeatStatus.AVAILABLE;
         }
 

@@ -7,7 +7,7 @@ const config = {
     vnp_HashSecret: process.env.VNPAY_HASH_SECRET,
     vnp_Url: process.env.VNPAY_URL,
     // ⭐️ SỬA 1: Dùng Link Mồi (Siêu An Toàn) ⭐️
-    vnp_ReturnUrl: "https://google.com", 
+    vnp_ReturnUrl: process.env.CLIENT_REDIRECT_URL,
     vnp_IpnUrl: process.env.VNPAY_IPN_URL     
 };
 
@@ -42,11 +42,10 @@ exports.createPaymentRequest = async ({ orderId, amount, orderInfo, ipAddr }) =>
     
     // ⭐️ SỬA 4: TẠM THỜI "NÉ" IPN ĐỂ TEST
     // vnp_Params['vnp_IpnUrl'] = config.vnp_IpnUrl; 
-    
+
+    vnp_Params['vnp_IpAddr'] = ipAddr || '127.0.0.1';
+
     vnp_Params['vnp_CreateDate'] = createDate;
-    
-    // ⭐️ SỬA 5: Dùng IP public an toàn (của Google)
-    vnp_Params['vnp_IpAddr'] = '8.8.8.8'; 
 
     // Sắp xếp A-Z (Code này đã chuẩn)
     let sortedKeys = Object.keys(vnp_Params).sort();

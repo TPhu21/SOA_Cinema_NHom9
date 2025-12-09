@@ -21,8 +21,7 @@ app.use((req, res, next) => {
 
 // ⭐️ ĐÃ SỬA: Lắng nghe ở gốc '/'
 const paymentRoutes = require('./routes/payments');
-app.use('/', paymentRoutes);
-app.use(cors());
+app.use('/api/payment', paymentRoutes);app.use(cors());
 
 
 sequelize.sync({ alter: true })

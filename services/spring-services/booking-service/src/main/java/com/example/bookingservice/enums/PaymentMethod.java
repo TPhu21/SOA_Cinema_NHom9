@@ -4,5 +4,6 @@ public enum PaymentMethod {
     MOMO,
     ZALOPAY,
     TRANSFER,
-    CASH
+    CASH,
+    VNPAY
 }
