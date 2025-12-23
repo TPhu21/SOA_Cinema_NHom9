@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CineMax Backoffice</title>
+    <link rel="stylesheet" href="../shared/css/backoffice.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🎬 CineMax</div>
+            <span class="role-badge" id="roleBadge"></span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <!-- Common menu items -->
+            <a href="dashboard.html" class="nav-item active">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            
+            <!-- Admin-only menu items -->
+            <div id="adminMenu" style="display: none;">
+                <div class="nav-section">Quản Lý Phim</div>
+                <a href="admin/movies.html" class="nav-item">
+                    <span class="nav-icon">🎬</span>
+                    <span class="nav-text">Phim</span>
+                </a>
+                <a href="admin/cinemas.html" class="nav-item">
+                    <span class="nav-icon">🏢</span>
+                    <span class="nav-text">Rạp Chiếu</span>
+                </a>
+                <a href="admin/showtimes.html" class="nav-item">
+                    <span class="nav-icon">🕐</span>
+                    <span class="nav-text">Suất Chiếu</span>
+                </a>
+                
+                <div class="nav-section">Quản Lý Bán Vé</div>
+                <a href="admin/bookings.html" class="nav-item">
+                    <span class="nav-icon">🎟️</span>
+                    <span class="nav-text">Đơn Đặt Vé</span>
+                </a>
+                
+                <div class="nav-section">Hệ Thống</div>
+                <a href="admin/users.html" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Người Dùng</span>
+                </a>
+                <a href="admin/settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Cài Đặt</span>
+                </a>
+            </div>
+            
+            <!-- Staff-only menu items -->
+            <div id="staffMenu" style="display: none;">
+                <div class="nav-section">Công Việc</div>
+                <a href="staff/checkin.html" class="nav-item">
+                    <span class="nav-icon">✅</span>
+                    <span class="nav-text">Soát Vé</span>
+                </a>
+                <a href="staff/tickets.html" class="nav-item">
+                    <span class="nav-icon">🎫</span>
+                    <span class="nav-text">Bán Vé Trực Tiếp</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role" id="userRole">...</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">
+                <span>🚪</span> Đăng Xuất
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>Dashboard</h1>
+            <div class="header-actions">
+                <span class="current-time" id="currentTime"></span>
+            </div>
+        </header>
+        
+        <!-- Quick Search/Scan Section (STAFF ONLY) -->
+        <section class="quick-search-section" id="quickSearchSection" style="display: none;">
+            <div class="search-card">
+                <h2>🔍 Tra Cứu & Scan Vé</h2>
+                <div class="search-form">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input-large" 
+                        placeholder="Nhập mã vé / mã booking / SĐT / Email khách hàng..."
+                        autocomplete="off"
+                    >
+                    <div class="search-buttons">
+                        <button class="btn btn-primary btn-large" id="btnSearch">
+                            <span>🔍</span> Tra Cứu
+                        </button>
+                        <button class="btn btn-success btn-large" id="btnScanQR">
+                            <span>📱</span> Scan QR
+                        </button>
+                    </div>
+                </div>
+                <div id="searchResult" class="search-result" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- KPI Cards -->
+        <section class="kpi-section" id="kpiSection">
+            <!-- Sẽ được render bởi JS theo role -->
+        </section>
+        
+        <!-- Alerts Panel (STAFF ONLY) -->
+        <section class="alerts-section" id="alertsSection" style="display: none;">
+            <h2>⚠️ Cảnh Báo Vận Hành</h2>
+            <div class="alerts-grid" id="alertsList">
+                <div class="alert-item warning">
+                    <span class="alert-icon">⏰</span>
+                    <div class="alert-content">
+                        <strong>3 suất sắp bắt đầu</strong> trong 30 phút tới
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Showtime Schedule (STAFF ONLY) -->
+        <section class="showtime-section" id="showtimeSection" style="display: none;">
+            <h2>📅 Suất Chiếu Hôm Nay</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Giờ</th>
+                            <th>Phim</th>
+                            <th>Phòng</th>
+                            <th>Trạng Thái</th>
+                            <th>Đã Bán</th>
+                            <th>Check-in</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="showtimeList">
+                        <tr><td colspan="7" style="text-align: center;">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Quick Actions - khác nhau theo role -->
+        <section class="quick-actions" id="quickActions">
+            <!-- Sẽ được render bởi JS theo role -->
+        </section>
+        
+        <!-- Task Queue / Recent Activity -->
+        <section class="recent-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="activityTitle">Hoạt Động Gần Đây</h2>
+                <div id="taskFilters" style="display: none;">
+                    <select class="filter-select" id="taskFilter">
+                        <option value="all">Tất cả</option>
+                        <option value="pending">Đang chờ</option>
+                        <option value="completed">Hoàn thành</option>
+                    </select>
+                </div>
+            </div>
+            <div class="activity-list" id="activityList">
+                <div class="activity-item">
+                    <div class="activity-icon">🎟️</div>
+                    <div class="activity-content">
+                        <div class="activity-text">Đơn đặt vé mới #BK001234</div>
+                        <div class="activity-time">5 phút trước</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../shared/js/auth.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8080/api';
+        
+        // Helper: API call với auth
+        async function apiCall(endpoint, options = {}) {
+            const token = getToken();
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    ...(options.headers || {})
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Network error' }));
+                throw new Error(error.message || 'API call failed');
+            }
+            
+            return response.status === 204 ? null : response.json();
+        }
+        
+        // Kiểm tra quyền truy cập
+        if (!requireAuth(ROLES.ADMIN, ROLES.STAFF)) {
+            // requireAuth sẽ tự redirect
+        }
+        
+        // Load user info
+        const user = getUser();
+        const role = getRole();
+        
+        if (user) {
+            document.getElementById('userName').textContent = user.name || user.username;
+            document.getElementById('userRole').textContent = role === ROLES.ADMIN ? 'Quản trị viên' : 'Nhân viên';
+            document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+            
+            // Role badge
+            const roleBadge = document.getElementById('roleBadge');
+            if (role === ROLES.ADMIN) {
+                roleBadge.textContent = '👑 Admin';
+                roleBadge.className = 'role-badge admin';
+            } else {
+                roleBadge.textContent = '👤 Staff';
+                roleBadge.className = 'role-badge staff';
+            }
+        }
+        
+        // Show menu và dashboard theo role
+        if (role === ROLES.ADMIN) {
+            document.getElementById('adminMenu').style.display = 'block';
+            renderAdminDashboard();
+        } else if (role === ROLES.STAFF) {
+            document.getElementById('staffMenu').style.display = 'block';
+            renderStaffDashboard();
+        }
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleString('vi-VN');
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // ========== ADMIN DASHBOARD ==========
+        function renderAdminDashboard() {
+            // KPI Cards cho Admin
+            document.getElementById('kpiSection').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-icon">🎟️</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="totalBookings">--</div>
+                        <div class="kpi-label">Đơn đặt vé hôm nay</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">💰</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="totalRevenue">--</div>
+                        <div class="kpi-label">Doanh thu hôm nay</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">🎬</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="totalMovies">--</div>
+                        <div class="kpi-label">Phim đang chiếu</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">👥</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="totalCustomers">--</div>
+                        <div class="kpi-label">Khách hàng</div>
+                    </div>
+                </div>
+            `;
+            
+            // Quick Actions cho Admin
+            document.getElementById('quickActions').innerHTML = `
+                <h2>Thao Tác Nhanh</h2>
+                <div class="action-buttons">
+                    <a href="admin/movies.html?action=add" class="action-btn">
+                        <span class="action-icon">➕</span>
+                        <span>Thêm Phim</span>
+                    </a>
+                    <a href="admin/showtimes.html?action=add" class="action-btn">
+                        <span class="action-icon">📅</span>
+                        <span>Tạo Suất Chiếu</span>
+                    </a>
+                    <a href="admin/bookings.html" class="action-btn">
+                        <span class="action-icon">📋</span>
+                        <span>Xem Đơn Đặt</span>
+                    </a>
+                    <a href="admin/settings.html" class="action-btn">
+                        <span class="action-icon">⚙️</span>
+                        <span>Cài Đặt</span>
+                    </a>
+                </div>
+            `;
+            
+            loadAdminKPIs();
+        }
+        
+        // ========== STAFF DASHBOARD ==========
+        function renderStaffDashboard() {
+            // Hiển thị Quick Search Section
+            document.getElementById('quickSearchSection').style.display = 'block';
+            
+            // KPI Cards vận hành cho Staff
+            document.getElementById('kpiSection').innerHTML = `
+                <div class="kpi-card urgent">
+                    <div class="kpi-icon">⏰</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="upcomingShowtimes">--</div>
+                        <div class="kpi-label">Suất sắp chiếu (30p)</div>
+                    </div>
+                </div>
+                <div class="kpi-card success">
+                    <div class="kpi-icon">✅</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="checkedInToday">--</div>
+                        <div class="kpi-label">Check-in hôm nay</div>
+                    </div>
+                </div>
+                <div class="kpi-card warning">
+                    <div class="kpi-icon">⏳</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="pendingPayments">--</div>
+                        <div class="kpi-label">Chờ thanh toán</div>
+                    </div>
+                </div>
+                <div class="kpi-card danger">
+                    <div class="kpi-icon">⚠️</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="issuesCount">--</div>
+                        <div class="kpi-label">Cảnh báo/Sự cố</div>
+                    </div>
+                </div>
+            `;
+            
+            // Hiển thị Alerts Section
+            document.getElementById('alertsSection').style.display = 'block';
+            
+            // Hiển thị Showtime Table
+            document.getElementById('showtimeSection').style.display = 'block';
+            
+            // Quick Actions cho Staff
+            document.getElementById('quickActions').innerHTML = `
+                <h2>Thao Tác Nhanh</h2>
+                <div class="action-buttons">
+                    <a href="staff/checkin.html" class="action-btn primary">
+                        <span class="action-icon">✅</span>
+                        <span>Soát Vé</span>
+                    </a>
+                    <a href="staff/tickets.html" class="action-btn success">
+                        <span class="action-icon">🎫</span>
+                        <span>Bán Vé Trực Tiếp</span>
+                    </a>
+                </div>
+            `;
+            
+            // Đổi Activity thành Task Queue
+            document.getElementById('activityTitle').textContent = '📋 Công Việc Cần Xử Lý';
+            document.getElementById('taskFilters').style.display = 'block';
+            
+            // Load data cho Staff
+            loadStaffKPIs();
+            loadAlerts();
+            loadTodayShowtimes();
+            loadTaskQueue();
+            initSearchHandlers();
+        }
+        
+        // ========== STAFF: Load KPIs ==========
+        async function loadStaffKPIs() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Gọi API để lấy dữ liệu thực
+                const [showtimes, bookings] = await Promise.all([
+                    apiCall(`/showtimes?date=${today}`).catch(() => []),
+                    apiCall(`/bookings?date=${today}`).catch(() => [])
+                ]);
+                
+                // 1. Suất sắp chiếu (30 phút tới)
+                const now = new Date();
+                const in30mins = new Date(now.getTime() + 30 * 60000);
+                const upcomingCount = showtimes.filter(s => {
+                    const showtime = new Date(s.startTime || s.time);
+                    return showtime >= now && showtime <= in30mins;
+                }).length;
+                document.getElementById('upcomingShowtimes').textContent = upcomingCount;
+                
+                // 2. Check-in hôm nay
+                const checkedIn = bookings.filter(b => b.status === 'checked_in' || b.checkedIn).length;
+                const totalBookings = bookings.filter(b => b.status !== 'cancelled').length;
+                document.getElementById('checkedInToday').textContent = `${checkedIn}/${totalBookings}`;
+                
+                // 3. Chờ thanh toán
+                const pendingCount = bookings.filter(b => 
+                    b.status === 'pending' || b.paymentStatus === 'pending'
+                ).length;
+                document.getElementById('pendingPayments').textContent = pendingCount;
+                
+                // 4. Cảnh báo/Sự cố (có thể tính từ các điều kiện)
+                let issuesCount = 0;
+                // Check trùng lịch, overbooking, etc.
+                const timeMap = new Map();
+                showtimes.forEach(s => {
+                    const key = `${s.roomId}-${s.startTime}`;
+                    timeMap.set(key, (timeMap.get(key) || 0) + 1);
+                });
+                issuesCount = Array.from(timeMap.values()).filter(count => count > 1).length;
+                issuesCount += pendingCount > 10 ? 1 : 0; // Thêm cảnh báo nếu quá nhiều pending
+                document.getElementById('issuesCount').textContent = issuesCount;
+                
+            } catch (error) {
+                console.error('Error loading staff KPIs:', error);
+                // Fallback UI
+                document.getElementById('upcomingShowtimes').textContent = '--';
+                document.getElementById('checkedInToday').textContent = '--';
+                document.getElementById('pendingPayments').textContent = '--';
+                document.getElementById('issuesCount').textContent = '--';
+            }
+        }
+        
+        // ========== STAFF: Load Alerts ==========
+        async function loadAlerts() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const [showtimes, bookings] = await Promise.all([
+                    apiCall(`/showtimes?date=${today}`).catch(() => []),
+                    apiCall(`/bookings?date=${today}`).catch(() => [])
+                ]);
+                
+                const alerts = [];
+                const now = new Date();
+                const in30mins = new Date(now.getTime() + 30 * 60000);
+                
+                // 1. Suất sắp bắt đầu
+                const upcomingShowtimes = showtimes.filter(s => {
+                    const showtime = new Date(s.startTime || s.time);
+                    return showtime >= now && showtime <= in30mins;
+                });
+                if (upcomingShowtimes.length > 0) {
+                    alerts.push({
+                        type: 'warning',
+                        icon: '⏰',
+                        text: `${upcomingShowtimes.length} suất sắp bắt đầu trong 30 phút tới`
+                    });
+                }
+                
+                // 2. Check trùng lịch chiếu
+                const timeMap = new Map();
+                showtimes.forEach(s => {
+                    const key = `${s.roomId || s.room}-${s.startTime || s.time}`;
+                    if (!timeMap.has(key)) {
+                        timeMap.set(key, []);
+                    }
+                    timeMap.get(key).push(s);
+                });
+                const conflicts = Array.from(timeMap.values()).filter(arr => arr.length > 1);
+                if (conflicts.length > 0) {
+                    const conflict = conflicts[0];
+                    const time = new Date(conflict[0].startTime || conflict[0].time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    alerts.push({
+                        type: 'danger',
+                        icon: '🚨',
+                        text: `Phòng ${conflict[0].roomId || conflict[0].room} bị trùng lịch chiếu (${time})`
+                    });
+                }
+                
+                // 3. Booking chờ thanh toán quá lâu (>15 phút)
+                const longPending = bookings.filter(b => {
+                    if (b.status !== 'pending' && b.paymentStatus !== 'pending') return false;
+                    const createdAt = new Date(b.createdAt || b.bookingTime);
+                    const diff = (now - createdAt) / 60000; // minutes
+                    return diff > 15;
+                });
+                if (longPending.length > 0) {
+                    alerts.push({
+                        type: 'info',
+                        icon: '💳',
+                        text: `${longPending.length} booking chờ thanh toán quá 15 phút`
+                    });
+                }
+                
+                // 4. Overbooking (nếu số vé bán > số ghế)
+                showtimes.forEach(s => {
+                    const bookingsForShowtime = bookings.filter(b => b.showtimeId === s.id);
+                    const soldSeats = bookingsForShowtime.reduce((sum, b) => sum + (b.seats?.length || 0), 0);
+                    if (soldSeats > (s.totalSeats || s.capacity || 100)) {
+                        alerts.push({
+                            type: 'danger',
+                            icon: '⚠️',
+                            text: `Overbooking tại ${s.movieTitle || 'Suất chiếu'} - ${s.roomId || s.room}`
+                        });
+                    }
+                });
+                
+                // Render alerts
+                if (alerts.length === 0) {
+                    alerts.push({
+                        type: 'info',
+                        icon: '✅',
+                        text: 'Không có cảnh báo. Hệ thống hoạt động bình thường.'
+                    });
+                }
+                
+                const html = alerts.slice(0, 5).map(a => `
+                    <div class="alert-item ${a.type}">
+                        <span class="alert-icon">${a.icon}</span>
+                        <div class="alert-content">${a.text}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('alertsList').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+                document.getElementById('alertsList').innerHTML = `
+                    <div class="alert-item danger">
+                        <span class="alert-icon">⚠️</span>
+                        <div class="alert-content">Không thể tải cảnh báo: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // ========== STAFF: Load Today Showtimes ==========
+        async function loadTodayShowtimes() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const [showtimes, movies, bookings] = await Promise.all([
+                    apiCall(`/showtimes?date=${today}`).catch(() => []),
+                    apiCall(`/movies`).catch(() => []),
+                    apiCall(`/bookings?date=${today}`).catch(() => [])
+                ]);
+                
+                // Map movies để lấy title
+                const movieMap = new Map(movies.map(m => [m.id, m.title || m.name]));
+                
+                // Tính toán số ghế bán và check-in cho mỗi suất
+                const showtimesWithStats = showtimes.map(s => {
+                    const showtimeBookings = bookings.filter(b => b.showtimeId === s.id);
+                    const soldCount = showtimeBookings.reduce((sum, b) => sum + (b.seats?.length || 1), 0);
+                    const checkinCount = showtimeBookings
+                        .filter(b => b.status === 'checked_in' || b.checkedIn)
+                        .reduce((sum, b) => sum + (b.seats?.length || 1), 0);
+                    
+                    return {
+                        ...s,
+                        soldCount,
+                        checkinCount,
+                        movieTitle: movieMap.get(s.movieId) || s.movieTitle || 'Unknown Movie'
+                    };
+                });
+                
+                // Sort theo thời gian
+                showtimesWithStats.sort((a, b) => {
+                    const timeA = new Date(a.startTime || a.time);
+                    const timeB = new Date(b.startTime || b.time);
+                    return timeA - timeB;
+                });
+                
+                const getStatusBadge = (showtime) => {
+                    const now = new Date();
+                    const startTime = new Date(showtime.startTime || showtime.time);
+                    const endTime = new Date(startTime.getTime() + (showtime.duration || 120) * 60000);
+                    
+                    if (now < startTime) {
+                        return '<span class="badge badge-warning">Sắp chiếu</span>';
+                    } else if (now >= startTime && now < endTime) {
+                        return '<span class="badge badge-success">Đang chiếu</span>';
+                    } else {
+                        return '<span class="badge badge-secondary">Kết thúc</span>';
+                    }
+                };
+                
+                const formatTime = (dateStr) => {
+                    const date = new Date(dateStr);
+                    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                };
+                
+                const html = showtimesWithStats.slice(0, 20).map(s => {
+                    const totalSeats = s.totalSeats || s.capacity || 100;
+                    return `
+                        <tr>
+                            <td><strong>${formatTime(s.startTime || s.time)}</strong></td>
+                            <td>${s.movieTitle}</td>
+                            <td>${s.roomName || s.room || `Phòng ${s.roomId}`}</td>
+                            <td>${getStatusBadge(s)}</td>
+                            <td>${s.soldCount}/${totalSeats}</td>
+                            <td>${s.checkinCount}/${s.soldCount}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="openCheckin('${s.id}')">Soát Vé</button>
+                                <button class="btn btn-sm btn-success" onclick="openSell('${s.id}')">Bán Vé</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                document.getElementById('showtimeList').innerHTML = html || 
+                    '<tr><td colspan="7" style="text-align: center;">Không có suất chiếu hôm nay</td></tr>';
+                
+            } catch (error) {
+                console.error('Error loading showtimes:', error);
+                document.getElementById('showtimeList').innerHTML = 
+                    `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+            }
+        }
+        
+        // ========== STAFF: Task Queue ==========
+        async function loadTaskQueue() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const bookings = await apiCall(`/bookings?date=${today}`).catch(() => []);
+                
+                const tasks = [];
+                const now = new Date();
+                
+                // 1. Booking chờ thanh toán
+                bookings
+                    .filter(b => b.status === 'pending' || b.paymentStatus === 'pending')
+                    .slice(0, 5)
+                    .forEach(b => {
+                        tasks.push({
+                            icon: '⏳',
+                            text: `Booking #${b.bookingCode || b.id} chờ thanh toán (SĐT: ${b.customerPhone || 'N/A'})`,
+                            action: 'Xem chi tiết',
+                            status: 'pending',
+                            bookingId: b.id
+                        });
+                    });
+                
+                // 2. Vé cần check-in (suất sắp chiếu)
+                const upcomingBookings = bookings.filter(b => {
+                    if (b.status === 'checked_in' || b.checkedIn) return false;
+                    if (b.status === 'cancelled') return false;
+                    const showtime = new Date(b.showtimeTime || b.showtime);
+                    const diff = (showtime - now) / 60000; // minutes
+                    return diff > 0 && diff <= 30;
+                });
+                upcomingBookings.slice(0, 3).forEach(b => {
+                    tasks.push({
+                        icon: '🎟️',
+                        text: `Check-in vé #${b.ticketCode || b.bookingCode || b.id} (${b.roomName || 'Phòng ' + b.roomId})`,
+                        action: 'Check-in',
+                        status: 'pending',
+                        bookingId: b.id
+                    });
+                });
+                
+                // 3. Yêu cầu đổi ghế / hủy vé (nếu có trường flagged)
+                bookings
+                    .filter(b => b.changeRequest || b.refundRequest)
+                    .slice(0, 3)
+                    .forEach(b => {
+                        tasks.push({
+                            icon: '🔄',
+                            text: `Yêu cầu ${b.changeRequest ? 'đổi ghế' : 'hoàn tiền'} #${b.bookingCode || b.id}`,
+                            action: 'Xử lý',
+                            status: 'pending',
+                            bookingId: b.id
+                        });
+                    });
+                
+                // Filter theo taskFilter
+                const filter = document.getElementById('taskFilter')?.value || 'all';
+                let filteredTasks = tasks;
+                if (filter === 'pending') {
+                    filteredTasks = tasks.filter(t => t.status === 'pending');
+                } else if (filter === 'completed') {
+                    filteredTasks = tasks.filter(t => t.status === 'completed');
+                }
+                
+                const html = filteredTasks.length > 0 ? filteredTasks.map(t => `
+                    <div class="activity-item ${t.status}">
+                        <div class="activity-icon">${t.icon}</div>
+                        <div class="activity-content">
+                            <div class="activity-text">${t.text}</div>
+                            <button class="btn btn-sm btn-primary" onclick="handleTask('${t.bookingId}')">${t.action}</button>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div class="activity-item">
+                        <div class="activity-icon">✅</div>
+                        <div class="activity-content">
+                            <div class="activity-text">Không có công việc đang chờ xử lý</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('activityList').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading task queue:', error);
+                document.getElementById('activityList').innerHTML = `
+                    <div class="activity-item danger">
+                        <div class="activity-icon">⚠️</div>
+                        <div class="activity-content">
+                            <div class="activity-text">Lỗi tải công việc: ${error.message}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Handle task action
+        function handleTask(bookingId) {
+            window.location.href = `admin/bookings.html?id=${bookingId}`;
+        }
+        
+        // ========== STAFF: Search Handlers ==========
+        function initSearchHandlers() {
+            const searchInput = document.getElementById('searchInput');
+            const btnSearch = document.getElementById('btnSearch');
+            const btnScanQR = document.getElementById('btnScanQR');
+            const taskFilter = document.getElementById('taskFilter');
+            
+            btnSearch.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+            
+            btnScanQR.addEventListener('click', () => {
+                alert('Tính năng Scan QR đang phát triển. Sẽ mở camera/scanner.');
+            });
+            
+            // Task filter
+            if (taskFilter) {
+                taskFilter.addEventListener('change', loadTaskQueue);
+            }
+        }
+        
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                alert('Vui lòng nhập mã vé, booking hoặc SĐT để tra cứu');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('searchResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div class="search-loading">Đang tra cứu "${query}"...</div>`;
+            
+            try {
+                // Tìm kiếm theo nhiều tiêu chí
+                let booking = null;
+                
+                // 1. Tìm theo booking code/ID
+                try {
+                    booking = await apiCall(`/bookings/${query}`);
+                } catch (e) {
+                    // Nếu không tìm thấy theo ID, thử search
+                }
+                
+                // 2. Nếu chưa tìm thấy, search theo phone/email
+                if (!booking) {
+                    const bookings = await apiCall(`/bookings/search?query=${encodeURIComponent(query)}`);
+                    if (bookings && bookings.length > 0) {
+                        booking = bookings[0];
+                    }
+                }
+                
+                if (!booking) {
+                    resultDiv.innerHTML = `
+                        <div class="search-item">
+                            <h3 style="color: #ef4444;">❌ Không tìm thấy</h3>
+                            <p>Không có booking nào với mã "${query}"</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Lấy thông tin chi tiết
+                const [movie, showtime] = await Promise.all([
+                    apiCall(`/movies/${booking.movieId}`).catch(() => ({ title: 'N/A' })),
+                    apiCall(`/showtimes/${booking.showtimeId}`).catch(() => ({}))
+                ]);
+                
+                const statusBadge = booking.status === 'confirmed' || booking.status === 'paid' 
+                    ? '<span class="badge badge-success">Đã thanh toán</span>'
+                    : booking.status === 'checked_in' || booking.checkedIn
+                    ? '<span class="badge badge-info">Đã check-in</span>'
+                    : '<span class="badge badge-warning">Chờ thanh toán</span>';
+                
+                const formatTime = (dateStr) => {
+                    if (!dateStr) return 'N/A';
+                    const date = new Date(dateStr);
+                    return date.toLocaleString('vi-VN', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit'
+                    });
+                };
+                
+                resultDiv.innerHTML = `
+                    <div class="search-item">
+                        <h3>Kết quả: Booking #${booking.bookingCode || booking.id}</h3>
+                        <p><strong>Khách hàng:</strong> ${booking.customerName || 'N/A'} (${booking.customerPhone || booking.customerEmail || 'N/A'})</p>
+                        <p><strong>Phim:</strong> ${movie.title || booking.movieTitle || 'N/A'}</p>
+                        <p><strong>Suất chiếu:</strong> ${formatTime(showtime.startTime || booking.showtimeTime)}, ${showtime.roomName || booking.roomName || 'Phòng ' + (showtime.roomId || booking.roomId)}</p>
+                        <p><strong>Ghế:</strong> ${booking.seats ? booking.seats.join(', ') : booking.seatNumbers || 'N/A'}</p>
+                        <p><strong>Số lượng:</strong> ${booking.quantity || booking.seats?.length || 1} vé</p>
+                        <p><strong>Tổng tiền:</strong> ${(booking.totalAmount || booking.total || 0).toLocaleString('vi-VN')} VNĐ</p>
+                        <p><strong>Trạng thái:</strong> ${statusBadge}</p>
+                        ${booking.status !== 'checked_in' && !booking.checkedIn ? `
+                            <button class="btn btn-primary" onclick="checkInTicket('${booking.id}')">Check-in</button>
+                        ` : '<p style="color: #22c55e;">✅ Đã check-in</p>'}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                resultDiv.innerHTML = `
+                    <div class="search-item">
+                        <h3 style="color: #ef4444;">⚠️ Lỗi tra cứu</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function checkInTicket(bookingId) {
+            if (!confirm(`Xác nhận check-in booking #${bookingId}?`)) return;
+            
+            try {
+                await apiCall(`/bookings/${bookingId}/checkin`, {
+                    method: 'POST'
+                });
+                
+                alert('✅ Check-in thành công!');
+                loadStaffKPIs();
+                loadTaskQueue();
+                loadTodayShowtimes();
+                performSearch(); // Refresh search result
+                
+            } catch (error) {
+                alert('❌ Lỗi check-in: ' + error.message);
+            }
+        }
+        
+        function openCheckin(showtimeId) {
+            window.location.href = `staff/checkin.html?showtimeId=${showtimeId}`;
+        }
+        
+        function openSell(showtimeId) {
+            window.location.href = `staff/tickets.html?showtimeId=${showtimeId}`;
+        }
+        
+        // ========== ADMIN: Load KPIs ==========
+        async function loadAdminKPIs() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Gọi các API song song
+                const [bookings, movies] = await Promise.all([
+                    apiCall(`/bookings?date=${today}`).catch(() => []),
+                    apiCall(`/movies`).catch(() => [])
+                ]);
+                
+                // 1. Tổng đơn đặt vé hôm nay
+                const totalBookings = bookings.filter(b => b.status !== 'cancelled').length;
+                document.getElementById('totalBookings').textContent = totalBookings;
+                
+                // 2. Doanh thu hôm nay
+                const revenue = bookings
+                    .filter(b => b.status === 'confirmed' || b.status === 'paid' || b.status === 'checked_in')
+                    .reduce((sum, b) => sum + (b.totalAmount || b.total || 0), 0);
+                const revenueM = (revenue / 1000000).toFixed(1);
+                document.getElementById('totalRevenue').textContent = `${revenueM}M`;
+                
+                // 3. Số phim đang chiếu
+                const nowShowingMovies = movies.filter(m => m.status === 'now_showing' || m.nowShowing).length;
+                document.getElementById('totalMovies').textContent = nowShowingMovies || movies.length;
+                
+                // 4. Số khách hàng (unique customers)
+                const uniqueCustomers = new Set(bookings.map(b => b.customerId || b.customerPhone || b.customerEmail)).size;
+                document.getElementById('totalCustomers').textContent = uniqueCustomers.toLocaleString('vi-VN');
+                
+            } catch (error) {
+                console.error('Error loading admin KPIs:', error);
+                document.getElementById('totalBookings').textContent = '--';
+                document.getElementById('totalRevenue').textContent = '--';
+                document.getElementById('totalMovies').textContent = '--';
+                document.getElementById('totalCustomers').textContent = '--';
+            }
+        }
+        
+        // Logout handler
+        function handleLogout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // TODO: Load KPIs từ API
+        // loadDashboardData();
+    </script>
+</body>
+</html>

@@ -18,3 +18,17 @@ spring:
     properties:
       hibernate:
         format_sql: true        # format SQL cho đẹp
+
+# Selenium Scraper Configuration
+scraper:
+  selenium:
+    headless: true              # true = chạy ẩn, false = hiện browser
+    wait-time: 5                # Thời gian đợi JS render (giây)
+
+# Excel Import/Export Configuration
+excel:
+  enabled: true                 # Bật AdminExcelController
+# Data Initialization Configuration
+data:
+  init:
+    enabled: false

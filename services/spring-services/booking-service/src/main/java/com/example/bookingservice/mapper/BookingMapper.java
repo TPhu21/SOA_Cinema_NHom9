@@ -10,5 +10,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface BookingMapper {
     Booking toBookingRequest(BookingRequest request);
+    
+    @Mapping(source = "seats", target = "seatCodes")
+    @Mapping(source = "bookingCode", target = "bookingCode")
+    @Mapping(source = "checkInTime", target = "checkInTime")
     BookingResponse toBookingResponse(Booking booking);
 }

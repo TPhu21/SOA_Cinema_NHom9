@@ -5,12 +5,22 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(
-        name = "showTimeClient",
-        url = "${showtime.service.url}",
-        path = "/api/showtimes"
-)
+import java.util.List;
+
+@FeignClient(name = "showTimeClient", url = "${showtime.service.url:http://localhost:8080}")
 public interface ShowTimeClient {
-    @GetMapping("/{id}")
+
+    /**
+     * Lấy showtime theo ID (Customer endpoint)
+     */
+    @GetMapping("/api/showtimes/{id}")
     ShowTimeDto getShowTime(@PathVariable("id") Long id);
+    
+    /**
+     * Lấy tất cả showtimes từ public endpoint
+     * Dùng cho data initialization
+     * Không cần authentication
+     */
+    @GetMapping("/api/showtimes/all-for-seed")
+    List<ShowTimeDto> getAllShowTimes();
 }

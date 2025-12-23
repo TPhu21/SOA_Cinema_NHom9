@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Phim - CineMax Admin</title>
+    <link rel="stylesheet" href="../../shared/css/backoffice.css">
+    <style>
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .movie-poster {
+            width: 50px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btns button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🎬 CineMax</div>
+            <span class="role-badge admin">👑 Admin</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="../dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            
+            <div class="nav-section">Quản Lý Phim</div>
+            <a href="movies.html" class="nav-item active">
+                <span class="nav-icon">🎬</span>
+                <span class="nav-text">Phim</span>
+            </a>
+            <a href="cinemas.html" class="nav-item">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-text">Rạp Chiếu</span>
+            </a>
+            <a href="showtimes.html" class="nav-item">
+                <span class="nav-icon">🕐</span>
+                <span class="nav-text">Suất Chiếu</span>
+            </a>
+            
+            <div class="nav-section">Quản Lý Bán Vé</div>
+            <a href="bookings.html" class="nav-item">
+                <span class="nav-icon">🎟️</span>
+                <span class="nav-text">Đơn Đặt Vé</span>
+            </a>
+            
+            <div class="nav-section">Hệ Thống</div>
+            <a href="users.html" class="nav-item">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Người Dùng</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Cài Đặt</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Admin</div>
+                    <div class="user-role">Quản trị viên</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">
+                <span>🚪</span> Đăng Xuất
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>🎬 Quản Lý Phim</h1>
+        </header>
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm phim...">
+                <button class="btn btn-outline" onclick="searchMovies()">🔍</button>
+            </div>
+            <div>
+                <button class="btn btn-outline" onclick="scrapeMovies()">🔄 Scrape CGV</button>
+                <button class="btn btn-primary" onclick="openAddModal()">➕ Thêm Phim</button>
+            </div>
+        </div>
+        
+        <!-- Movies Table -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Poster</th>
+                        <th>Tên Phim</th>
+                        <th>Thể Loại</th>
+                        <th>Thời Lượng</th>
+                        <th>Trạng Thái</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="moviesTable">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="movieModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Phim Mới</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="movieForm">
+                    <div class="form-group">
+                        <label>Tên phim *</label>
+                        <input type="text" class="form-control" id="movieTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Thể loại</label>
+                        <input type="text" class="form-control" id="movieGenre" placeholder="VD: Action, Drama">
+                    </div>
+                    <div class="form-group">
+                        <label>Thời lượng (phút)</label>
+                        <input type="number" class="form-control" id="movieDuration" placeholder="VD: 120">
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <textarea class="form-control" id="movieDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Poster URL</label>
+                        <input type="url" class="form-control" id="moviePoster" placeholder="https://...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Hủy</button>
+                <button class="btn btn-primary" onclick="saveMovie()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../shared/js/auth.js"></script>
+    <script>
+        // Kiểm tra quyền Admin
+        if (!requireAuth(ROLES.ADMIN)) {
+            // requireAuth sẽ tự redirect
+        }
+        
+        // Load user info
+        const user = getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.name || user.username;
+            document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+        }
+        
+        // Load movies on page load
+        loadMovies();
+        
+        async function loadMovies() {
+            try {
+                // TODO: Gọi API thực tế
+                // const response = await authFetch('/api/movies');
+                // const movies = await response.json();
+                
+                // DEMO data
+                const movies = [
+                    { id: 1, title: 'Avengers: Endgame', genre: 'Action, Sci-Fi', duration: 181, status: 'NOW_SHOWING', poster: '' },
+                    { id: 2, title: 'Spider-Man: No Way Home', genre: 'Action, Adventure', duration: 148, status: 'NOW_SHOWING', poster: '' },
+                    { id: 3, title: 'The Batman', genre: 'Action, Crime', duration: 176, status: 'COMING_SOON', poster: '' },
+                ];
+                
+                renderMovies(movies);
+                
+            } catch (error) {
+                console.error('Error loading movies:', error);
+            }
+        }
+        
+        function renderMovies(movies) {
+            const tbody = document.getElementById('moviesTable');
+            
+            if (movies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Chưa có phim nào</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = movies.map(movie => `
+                <tr>
+                    <td>
+                        <img src="${movie.poster || 'https://via.placeholder.com/50x70?text=No+Image'}" 
+                             class="movie-poster" alt="${movie.title}">
+                    </td>
+                    <td><strong>${movie.title}</strong></td>
+                    <td>${movie.genre || '--'}</td>
+                    <td>${movie.duration ? movie.duration + ' phút' : '--'}</td>
+                    <td>
+                        <span class="badge ${movie.status === 'NOW_SHOWING' ? 'badge-success' : 'badge-info'}">
+                            ${movie.status === 'NOW_SHOWING' ? 'Đang chiếu' : 'Sắp chiếu'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn btn-outline" onclick="editMovie(${movie.id})">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteMovie(${movie.id})">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm Phim Mới';
+            document.getElementById('movieForm').reset();
+            document.getElementById('movieModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('movieModal').classList.remove('show');
+        }
+        
+        function saveMovie() {
+            const title = document.getElementById('movieTitle').value.trim();
+            if (!title) {
+                alert('Vui lòng nhập tên phim');
+                return;
+            }
+            
+            // TODO: Gọi API save
+            alert('Đã lưu phim: ' + title);
+            closeModal();
+            loadMovies();
+        }
+        
+        function editMovie(id) {
+            alert('Edit movie ID: ' + id);
+            // TODO: Load movie data và mở modal
+        }
+        
+        function deleteMovie(id) {
+            if (confirm('Bạn có chắc muốn xóa phim này?')) {
+                // TODO: Gọi API delete
+                alert('Đã xóa movie ID: ' + id);
+                loadMovies();
+            }
+        }
+        
+        async function scrapeMovies() {
+            if (!confirm('Bắt đầu scrape phim từ CGV?')) return;
+            
+            try {
+                // TODO: Gọi API scrape
+                // await authFetch('/api/admin/movies/scrape/cgv', { method: 'POST' });
+                alert('Đang scrape... (Demo)');
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            }
+        }
+        
+        function searchMovies() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            // TODO: Implement search
+            alert('Search: ' + keyword);
+        }
+        
+        function handleLogout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+                window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>

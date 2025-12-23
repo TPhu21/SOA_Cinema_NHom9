@@ -1,6 +1,8 @@
 package com.example.showtimeservice.dto.response;
 
 
+import com.example.showtimeservice.client.dto.CinemaResponse;
+import com.example.showtimeservice.client.dto.RoomDto;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,10 +17,12 @@ public class ShowTimeResponse {
     Long movieId;
     LocalDateTime startTime;
     LocalDateTime endTime;
-
     LocalDate showDate;
-
     BigDecimal basePrice;
 
+    /** Thông tin rạp (dùng cho response chi tiết) */
+    CinemaResponse cinema;
 
+    /** Thông tin phòng (dùng cho response chi tiết) */
+    RoomDto room;
 }

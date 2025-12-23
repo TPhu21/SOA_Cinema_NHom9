@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
         name = "cinemaClient",
-        url = "http://localhost:8080",
+        url = "${cinema.service.url:http://localhost:8080}",
         path = "/api/cinemas"
 )
 public interface CinemaClient {

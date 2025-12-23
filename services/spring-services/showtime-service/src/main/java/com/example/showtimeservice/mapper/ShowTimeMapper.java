@@ -8,5 +8,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface ShowTimeMapper {
+    @Mapping(target = "cinema", ignore = true)
+    @Mapping(target = "room", ignore = true)
     ShowTimeResponse toShowTimeResponse(ShowTime showTime);
 }

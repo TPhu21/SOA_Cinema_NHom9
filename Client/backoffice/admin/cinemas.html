@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Rạp - CineMax Admin</title>
+    <link rel="stylesheet" href="../../shared/css/backoffice.css">
+    <style>
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btns button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .rooms-list {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+        }
+        
+        .rooms-list span {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255, 184, 0, 0.2);
+            color: var(--primary-gold);
+            border-radius: 5px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🎬 CineMax</div>
+            <span class="role-badge admin">👑 Admin</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="../dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            
+            <div class="nav-section">Quản Lý Phim</div>
+            <a href="movies.html" class="nav-item">
+                <span class="nav-icon">🎬</span>
+                <span class="nav-text">Phim</span>
+            </a>
+            <a href="cinemas.html" class="nav-item active">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-text">Rạp Chiếu</span>
+            </a>
+            <a href="showtimes.html" class="nav-item">
+                <span class="nav-icon">🕐</span>
+                <span class="nav-text">Suất Chiếu</span>
+            </a>
+            
+            <div class="nav-section">Quản Lý Bán Vé</div>
+            <a href="bookings.html" class="nav-item">
+                <span class="nav-icon">🎟️</span>
+                <span class="nav-text">Đơn Đặt Vé</span>
+            </a>
+            
+            <div class="nav-section">Hệ Thống</div>
+            <a href="users.html" class="nav-item">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Người Dùng</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Cài Đặt</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Admin</div>
+                    <div class="user-role">Quản trị viên</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">
+                <span>🚪</span> Đăng Xuất
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>🏢 Quản Lý Rạp Chiếu</h1>
+        </header>
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm rạp...">
+                <button class="btn btn-outline" onclick="searchCinemas()">🔍</button>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="openAddModal()">➕ Thêm Rạp</button>
+            </div>
+        </div>
+        
+        <!-- Cinemas Table -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên Rạp</th>
+                        <th>Địa Chỉ</th>
+                        <th>Số Phòng</th>
+                        <th>Trạng Thái</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="cinemasTable">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="cinemaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Rạp Mới</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="cinemaForm">
+                    <div class="form-group">
+                        <label>Tên rạp *</label>
+                        <input type="text" class="form-control" id="cinemaName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Địa chỉ</label>
+                        <input type="text" class="form-control" id="cinemaAddress">
+                    </div>
+                    <div class="form-group">
+                        <label>Thành phố</label>
+                        <select class="form-control" id="cinemaCity">
+                            <option value="">-- Chọn thành phố --</option>
+                            <option value="ho-chi-minh">Hồ Chí Minh</option>
+                            <option value="ha-noi">Hà Nội</option>
+                            <option value="da-nang">Đà Nẵng</option>
+                            <option value="hai-phong">Hải Phòng</option>
+                            <option value="can-tho">Cần Thơ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" class="form-control" id="cinemaPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <select class="form-control" id="cinemaStatus">
+                            <option value="ACTIVE">Hoạt động</option>
+                            <option value="INACTIVE">Tạm đóng</option>
+                            <option value="MAINTENANCE">Bảo trì</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Hủy</button>
+                <button class="btn btn-primary" onclick="saveCinema()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../shared/js/auth.js"></script>
+    <script>
+        // Kiểm tra quyền Admin
+        if (!requireAuth(ROLES.ADMIN)) {
+            // requireAuth sẽ tự redirect
+        }
+        
+        // Load user info
+        const user = getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.name || user.username;
+            document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+        }
+        
+        // Load cinemas on page load
+        loadCinemas();
+        
+        async function loadCinemas() {
+            try {
+                // TODO: Gọi API thực tế
+                // const response = await authFetch('/api/cinemas');
+                // const cinemas = await response.json();
+                
+                // DEMO data
+                const cinemas = [
+                    { id: 1, name: 'CGV Vincom Đồng Khởi', address: '171 Đồng Khởi, Quận 1', city: 'Hồ Chí Minh', rooms: 8, status: 'ACTIVE' },
+                    { id: 2, name: 'CGV Landmark 81', address: '772 Điện Biên Phủ, Bình Thạnh', city: 'Hồ Chí Minh', rooms: 10, status: 'ACTIVE' },
+                    { id: 3, name: 'Galaxy Nguyễn Du', address: '116 Nguyễn Du, Quận 1', city: 'Hồ Chí Minh', rooms: 6, status: 'ACTIVE' },
+                    { id: 4, name: 'Lotte Cinema Nowzone', address: '235 Nguyễn Văn Cừ, Quận 1', city: 'Hồ Chí Minh', rooms: 7, status: 'MAINTENANCE' },
+                ];
+                
+                renderCinemas(cinemas);
+                
+            } catch (error) {
+                console.error('Error loading cinemas:', error);
+            }
+        }
+        
+        function renderCinemas(cinemas) {
+            const tbody = document.getElementById('cinemasTable');
+            
+            if (cinemas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Chưa có rạp nào</td></tr>';
+                return;
+            }
+            
+            const statusLabels = {
+                'ACTIVE': { text: 'Hoạt động', class: 'badge-success' },
+                'INACTIVE': { text: 'Tạm đóng', class: 'badge-warning' },
+                'MAINTENANCE': { text: 'Bảo trì', class: 'badge-info' }
+            };
+            
+            tbody.innerHTML = cinemas.map(cinema => `
+                <tr>
+                    <td><code>#${cinema.id}</code></td>
+                    <td><strong>${cinema.name}</strong></td>
+                    <td>${cinema.address || '--'}</td>
+                    <td>${cinema.rooms || 0} phòng</td>
+                    <td>
+                        <span class="badge ${statusLabels[cinema.status]?.class || 'badge-secondary'}">
+                            ${statusLabels[cinema.status]?.text || cinema.status}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn btn-outline" onclick="viewRooms(${cinema.id})" title="Xem phòng">🚪</button>
+                            <button class="btn btn-outline" onclick="editCinema(${cinema.id})" title="Sửa">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteCinema(${cinema.id})" title="Xóa">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm Rạp Mới';
+            document.getElementById('cinemaForm').reset();
+            document.getElementById('cinemaModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('cinemaModal').classList.remove('show');
+        }
+        
+        function saveCinema() {
+            const name = document.getElementById('cinemaName').value.trim();
+            if (!name) {
+                alert('Vui lòng nhập tên rạp');
+                return;
+            }
+            
+            // TODO: Gọi API save
+            alert('Đã lưu rạp: ' + name);
+            closeModal();
+            loadCinemas();
+        }
+        
+        function viewRooms(id) {
+            alert('Xem danh sách phòng của rạp ID: ' + id);
+            // TODO: Navigate to rooms management or show modal
+        }
+        
+        function editCinema(id) {
+            alert('Edit cinema ID: ' + id);
+            // TODO: Load cinema data và mở modal
+        }
+        
+        function deleteCinema(id) {
+            if (confirm('Bạn có chắc muốn xóa rạp này? Tất cả phòng và suất chiếu liên quan sẽ bị xóa!')) {
+                // TODO: Gọi API delete
+                alert('Đã xóa cinema ID: ' + id);
+                loadCinemas();
+            }
+        }
+        
+        function searchCinemas() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            // TODO: Implement search
+            alert('Search: ' + keyword);
+        }
+        
+        function handleLogout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+                window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>

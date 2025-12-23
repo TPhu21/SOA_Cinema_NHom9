@@ -16,13 +16,22 @@ import java.util.List;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table (name = "bookings")
+@Table(name = "bookings")
 @Data
-@Builder // để tạo builder mới khi cần@FieldDefaults (level = AccessLevel.PRIVATE)
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Booking {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY )
     Long bookingId;
+    
+    /**
+     * Mã vé duy nhất để kiểm vé (VD: BK20241220001)
+     * Staff sử dụng mã này để scan/nhập khi khách đến rạp
+     */
+    @Column(unique = true, length = 20)
+    String bookingCode;
+    
     String userId;
     Long showTimeId;
     BigDecimal totalPrice;
@@ -33,6 +42,10 @@ public class Booking {
     private List<String> seats = new ArrayList<>();
     LocalDateTime createTime;
     LocalDateTime updateTime;
+    
+    /** Thời điểm Staff check-in (kiểm vé) */
+    LocalDateTime checkInTime;
+    
     Integer quantity;
 
     @Enumerated (EnumType.STRING)

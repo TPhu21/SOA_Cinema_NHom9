@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Đơn Đặt Vé - CineMax Admin</title>
+    <link rel="stylesheet" href="../../shared/css/backoffice.css">
+    <style>
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filters select, .filters input {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            min-width: 150px;
+        }
+        
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btns button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        
+        .booking-code {
+            font-family: monospace;
+            background: rgba(255, 184, 0, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: var(--primary-gold);
+        }
+        
+        .price {
+            font-weight: 600;
+            color: var(--primary-gold);
+        }
+        
+        .seats-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        
+        .seats-list span {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            color: var(--text-muted);
+        }
+        
+        .detail-value {
+            font-weight: 500;
+        }
+        
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-gold);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🎬 CineMax</div>
+            <span class="role-badge admin">👑 Admin</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="../dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            
+            <div class="nav-section">Quản Lý Phim</div>
+            <a href="movies.html" class="nav-item">
+                <span class="nav-icon">🎬</span>
+                <span class="nav-text">Phim</span>
+            </a>
+            <a href="cinemas.html" class="nav-item">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-text">Rạp Chiếu</span>
+            </a>
+            <a href="showtimes.html" class="nav-item">
+                <span class="nav-icon">🕐</span>
+                <span class="nav-text">Suất Chiếu</span>
+            </a>
+            
+            <div class="nav-section">Quản Lý Bán Vé</div>
+            <a href="bookings.html" class="nav-item active">
+                <span class="nav-icon">🎟️</span>
+                <span class="nav-text">Đơn Đặt Vé</span>
+            </a>
+            
+            <div class="nav-section">Hệ Thống</div>
+            <a href="users.html" class="nav-item">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Người Dùng</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Cài Đặt</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Admin</div>
+                    <div class="user-role">Quản trị viên</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">
+                <span>🚪</span> Đăng Xuất
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>🎟️ Quản Lý Đơn Đặt Vé</h1>
+        </header>
+        
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="totalBookings">0</div>
+                <div class="stat-label">Tổng đơn hôm nay</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="confirmedBookings">0</div>
+                <div class="stat-label">Đã xác nhận</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingBookings">0</div>
+                <div class="stat-label">Chờ thanh toán</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRevenue">0đ</div>
+                <div class="stat-label">Doanh thu hôm nay</div>
+            </div>
+        </div>
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="filters">
+                <input type="text" id="searchCode" placeholder="Mã đặt vé...">
+                <select id="filterStatus">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="PENDING">Chờ thanh toán</option>
+                    <option value="CONFIRMED">Đã xác nhận</option>
+                    <option value="CHECKED_IN">Đã soát vé</option>
+                    <option value="CANCELLED">Đã hủy</option>
+                </select>
+                <input type="date" id="filterDate">
+                <button class="btn btn-outline" onclick="applyFilter()">🔍 Lọc</button>
+            </div>
+            <div>
+                <button class="btn btn-outline" onclick="exportBookings()">📥 Xuất Excel</button>
+            </div>
+        </div>
+        
+        <!-- Bookings Table -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mã Đặt Vé</th>
+                        <th>Khách Hàng</th>
+                        <th>Phim / Suất</th>
+                        <th>Ghế</th>
+                        <th>Tổng Tiền</th>
+                        <th>Trạng Thái</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingsTable">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            Đang tải dữ liệu...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <!-- Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Chi Tiết Đơn Đặt Vé</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="bookingDetail">
+                <!-- Will be filled by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../shared/js/auth.js"></script>
+    <script>
+        // Kiểm tra quyền Admin
+        if (!requireAuth(ROLES.ADMIN)) {
+            // requireAuth sẽ tự redirect
+        }
+        
+        // Load user info
+        const user = getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.name || user.username;
+            document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+        }
+        
+        // Set default date to today
+        document.getElementById('filterDate').valueAsDate = new Date();
+        
+        // Load bookings on page load
+        loadBookings();
+        loadStats();
+        
+        async function loadStats() {
+            // DEMO stats
+            document.getElementById('totalBookings').textContent = '47';
+            document.getElementById('confirmedBookings').textContent = '38';
+            document.getElementById('pendingBookings').textContent = '9';
+            document.getElementById('totalRevenue').textContent = '4,350,000đ';
+        }
+        
+        async function loadBookings() {
+            try {
+                // TODO: Gọi API thực tế
+                // const response = await authFetch('/api/bookings');
+                // const bookings = await response.json();
+                
+                // DEMO data
+                const bookings = [
+                    { 
+                        id: 'BK20250115001',
+                        customerName: 'Nguyễn Văn A',
+                        customerPhone: '0901234567',
+                        movie: 'Avengers: Endgame',
+                        cinema: 'CGV Vincom',
+                        showtime: '15/01 - 14:30',
+                        seats: ['A1', 'A2', 'A3'],
+                        totalAmount: 285000,
+                        status: 'CONFIRMED',
+                        paymentMethod: 'MOMO',
+                        createdAt: '2025-01-15 10:23:45'
+                    },
+                    { 
+                        id: 'BK20250115002',
+                        customerName: 'Trần Thị B',
+                        customerPhone: '0912345678',
+                        movie: 'Spider-Man: No Way Home',
+                        cinema: 'CGV Landmark 81',
+                        showtime: '15/01 - 19:00',
+                        seats: ['D5', 'D6'],
+                        totalAmount: 190000,
+                        status: 'PENDING',
+                        paymentMethod: 'VNPAY',
+                        createdAt: '2025-01-15 11:45:00'
+                    },
+                    { 
+                        id: 'BK20250115003',
+                        customerName: 'Lê Văn C',
+                        customerPhone: '0923456789',
+                        movie: 'The Batman',
+                        cinema: 'CGV Vincom',
+                        showtime: '15/01 - 21:30',
+                        seats: ['H10'],
+                        totalAmount: 95000,
+                        status: 'CHECKED_IN',
+                        paymentMethod: 'ZALOPAY',
+                        createdAt: '2025-01-15 09:15:30'
+                    },
+                    { 
+                        id: 'BK20250115004',
+                        customerName: 'Phạm Thị D',
+                        customerPhone: '0934567890',
+                        movie: 'Avengers: Endgame',
+                        cinema: 'Galaxy Nguyễn Du',
+                        showtime: '15/01 - 10:00',
+                        seats: ['B3', 'B4'],
+                        totalAmount: 150000,
+                        status: 'CANCELLED',
+                        paymentMethod: 'MOMO',
+                        createdAt: '2025-01-14 22:00:00'
+                    },
+                ];
+                
+                renderBookings(bookings);
+                
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+            }
+        }
+        
+        function renderBookings(bookings) {
+            const tbody = document.getElementById('bookingsTable');
+            
+            if (bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">Không có đơn đặt vé nào</td></tr>';
+                return;
+            }
+            
+            const statusLabels = {
+                'PENDING': { text: 'Chờ thanh toán', class: 'badge-warning' },
+                'CONFIRMED': { text: 'Đã xác nhận', class: 'badge-success' },
+                'CHECKED_IN': { text: 'Đã soát vé', class: 'badge-info' },
+                'CANCELLED': { text: 'Đã hủy', class: 'badge-danger' }
+            };
+            
+            tbody.innerHTML = bookings.map(booking => `
+                <tr>
+                    <td><span class="booking-code">${booking.id}</span></td>
+                    <td>
+                        <strong>${booking.customerName}</strong><br>
+                        <small class="text-muted">${booking.customerPhone}</small>
+                    </td>
+                    <td>
+                        ${booking.movie}<br>
+                        <small class="text-muted">${booking.cinema} - ${booking.showtime}</small>
+                    </td>
+                    <td>
+                        <div class="seats-list">
+                            ${booking.seats.map(s => `<span>${s}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td><span class="price">${formatCurrency(booking.totalAmount)}</span></td>
+                    <td>
+                        <span class="badge ${statusLabels[booking.status]?.class || 'badge-secondary'}">
+                            ${statusLabels[booking.status]?.text || booking.status}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn btn-outline" onclick="viewDetail('${booking.id}')" title="Chi tiết">👁️</button>
+                            ${booking.status === 'PENDING' ? `
+                                <button class="btn btn-success" onclick="confirmBooking('${booking.id}')" title="Xác nhận">✅</button>
+                            ` : ''}
+                            ${booking.status !== 'CANCELLED' && booking.status !== 'CHECKED_IN' ? `
+                                <button class="btn btn-danger" onclick="cancelBooking('${booking.id}')" title="Hủy">❌</button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+        
+        function viewDetail(bookingId) {
+            // DEMO detail
+            const detailHtml = `
+                <div class="detail-row">
+                    <span class="detail-label">Mã đặt vé</span>
+                    <span class="detail-value booking-code">${bookingId}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Khách hàng</span>
+                    <span class="detail-value">Nguyễn Văn A</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Số điện thoại</span>
+                    <span class="detail-value">0901234567</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phim</span>
+                    <span class="detail-value">Avengers: Endgame</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Rạp / Phòng</span>
+                    <span class="detail-value">CGV Vincom - Phòng 1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Suất chiếu</span>
+                    <span class="detail-value">15/01/2025 - 14:30</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Ghế</span>
+                    <span class="detail-value">A1, A2, A3</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Thanh toán</span>
+                    <span class="detail-value">MOMO</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tổng tiền</span>
+                    <span class="detail-value price">285,000đ</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Thời gian đặt</span>
+                    <span class="detail-value">15/01/2025 10:23:45</span>
+                </div>
+            `;
+            
+            document.getElementById('bookingDetail').innerHTML = detailHtml;
+            document.getElementById('detailModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function confirmBooking(bookingId) {
+            if (confirm('Xác nhận đơn đặt vé ' + bookingId + '?')) {
+                // TODO: Gọi API confirm
+                alert('Đã xác nhận đơn ' + bookingId);
+                loadBookings();
+            }
+        }
+        
+        function cancelBooking(bookingId) {
+            if (confirm('Bạn có chắc muốn hủy đơn đặt vé ' + bookingId + '?')) {
+                // TODO: Gọi API cancel
+                alert('Đã hủy đơn ' + bookingId);
+                loadBookings();
+            }
+        }
+        
+        function applyFilter() {
+            const code = document.getElementById('searchCode').value.trim();
+            const status = document.getElementById('filterStatus').value;
+            const date = document.getElementById('filterDate').value;
+            
+            console.log('Filter:', { code, status, date });
+            // TODO: Implement filter
+            loadBookings();
+        }
+        
+        function exportBookings() {
+            alert('Đang xuất file Excel... (Demo)');
+            // TODO: Implement export
+        }
+        
+        function handleLogout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+                window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>

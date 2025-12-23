@@ -16,6 +16,7 @@ public class Room {
     @Id
     Long roomId;
     String roomName;
+    String roomType; // STANDARD, VIP, IMAX, 4DX
 
     Integer rowCount;
     Integer colCount;

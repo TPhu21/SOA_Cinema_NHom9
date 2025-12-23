@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phim Chiếu Rạp - CINEMAX</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://static.vecteezy.com/system/resources/thumbnails/006/240/302/small/abstract-soft-focus-sunset-field-landscape-of-yellow-flowers-and-grass-meadow-warm-golden-hour-sunset-sunrise-time-tranquil-spring-summer-nature-closeup-and-blurred-forest-background-idyllic-nature-photo.jpg') center/cover fixed;
+            background-attachment: fixed;
+        }
+
+        .genres-container {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .genre-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .genre-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .genre-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+        }
+
+        main.container {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="TrangChu.html" class="logo">Cine<span>Max</span></a>
+            
+            <ul class="nav-menu">
+                <li><a href="TrangChu.html">Trang Chủ</a></li>
+                <li><a href="Phim.html">Phim</a></li>
+                <li><a href="RapChieu.html">Rạp Chiếu</a></li>
+                <li><a href="KhuyenMai.html">Khuyến Mãi</a></li>
+                <li><a href="LienHe.html">Liên Hệ</a></li>
+            </ul>
+            
+            <div class="user-actions">
+                <button class="btn btn-outline" id="loginBtn" onclick="redirectToTaiKhoan()">Đăng Nhập</button>
+                <button class="btn btn-primary" id="registerBtn" onclick="redirectToTaiKhoan()">Đăng Ký</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2 class="section-title" id="movies">Phim Đang Chiếu</h2>
+        
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" class="search-input" placeholder="Tìm kiếm phim..." style="border: 2px solid var(--light); border-radius: 6px 0 0 6px;">
+                <button id="search-btn" class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="genres-container" class="genres-container" aria-label="Bộ lọc thể loại">
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Đang tải danh sách phim...</p>
+        </div>
+        
+        <div id="movies-container" class="movies-grid">
+         
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="GioiThieu.html">Giới thiệu</a>
+                <a href="DieuKhoanSuDung.html">Điều khoản sử dụng</a>
+                <a href="ChinhSachBaoMat.html">Chính sách bảo mật</a>
+                <a href="CauHoiThuongGap.html">Câu hỏi thường gặp</a>
+                <a href="LienHe.html">Liên hệ</a>
+            </div>
+            <p class="copyright">© 2025 CineMax. Tất cả các quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+
+    <script src="config.js"></script>
+
+<!--    <script>-->
+<!--    // const SERVER_API_URL = 'http://localhost:3000/api/movies';-->
+<!--    const SERVER_API_URL = API_BASE_URL + '/movies';-->
+
+<!--    async function asyncPool(poolLimit, array, iteratorFn) {-->
+<!--        const ret = [];-->
+<!--        const executing = [];-->
+<!--        for (const item of array) {-->
+<!--            const p = Promise.resolve().then(() => iteratorFn(item));-->
+<!--            ret.push(p);-->
+<!--            if (poolLimit <= array.length) {-->
+<!--                const e = p.then(() => executing.splice(executing.indexOf(e), 1));-->
+<!--                executing.push(e);-->
+<!--                if (executing.length >= poolLimit) {-->
+<!--                    await Promise.race(executing);-->
+<!--                }-->
+<!--            }-->
+<!--        }-->
+<!--        return Promise.all(ret);-->
+<!--    }-->
+<!--    -->
+<!--    const defaultMovieIDs = ['tt1375666','tt0816692','tt0133093','tt0111161','tt0468569','tt0109830','tt0167260','tt0137523','tt0110912','tt0120737','tt3896198'];-->
+
+<!--    let allMovies = []; -->
+<!--    const movieCache = new Map(); -->
+<!--    const CACHE_TTL = 1000 * 60 * 60 * 24;-->
+
+<!--    function cacheSet(key, val) {-->
+<!--        movieCache.set(key, { ts: Date.now(), val });-->
+<!--        try { localStorage.setItem('movie_' + key, JSON.stringify({ ts: Date.now(), val })); } catch {}-->
+<!--    }-->
+<!--    function cacheGet(key) {-->
+<!--        const mem = movieCache.get(key);-->
+<!--        if (mem && (Date.now() - mem.ts) < CACHE_TTL) return mem.val;-->
+<!--        try {-->
+<!--            const raw = localStorage.getItem('movie_' + key);-->
+<!--            if (raw) {-->
+<!--                const obj = JSON.parse(raw);-->
+<!--                if ((Date.now() - obj.ts) < CACHE_TTL) {-->
+<!--                    movieCache.set(key, { ts: obj.ts, val: obj.val });-->
+<!--                    return obj.val;-->
+<!--                } else {-->
+<!--                    localStorage.removeItem('movie_' + key);-->
+<!--                }-->
+<!--            }-->
+<!--        } catch {}-->
+<!--        return null;-->
+<!--    }-->
+
+<!--    async function fetchMovieByID(id) {-->
+<!--        const cached = cacheGet(id);-->
+<!--        if (cached) return cached;-->
+<!--        try {-->
+<!--            const res = await fetch(`${SERVER_API_URL}/id/${id}`);-->
+<!--            const data = await res.json();-->
+<!--            if (data && data.Response !== 'False') {-->
+<!--                cacheSet(id, data);-->
+<!--                return data;-->
+<!--            }-->
+<!--            return null;-->
+<!--        } catch (err) {-->
+<!--            console.error('fetchMovieByID error', err);-->
+<!--            return null;-->
+<!--        }-->
+<!--    }-->
+<!--    async function searchMovies(query, year, page = 1) {-->
+<!--        try {-->
+<!--            let url = `${SERVER_API_URL}/search?s=${encodeURIComponent(query)}&page=${page}`;-->
+<!--            if (year) {-->
+<!--                url += `&y=${year}`;-->
+<!--            }-->
+<!--            const res = await fetch(url);-->
+<!--            const data = await res.json();-->
+<!--            return data || []; -->
+<!--        } catch (err) {-->
+<!--            console.error('searchMovies error', err);-->
+<!--            return [];-->
+<!--        }-->
+<!--    }-->
+
+<!--    function extractGenresFromMovies(movies) {-->
+<!--        const s = new Set();-->
+<!--        movies.forEach(m => { if (!m || !m.Genre) return; m.Genre.split(',').map(g=>g.trim()).forEach(g=>g && s.add(g)); });-->
+<!--        return Array.from(s).sort();-->
+<!--    }-->
+
+<!--    async function loadDefaultMovies() {-->
+<!--        document.getElementById('loading').style.display = 'block';-->
+<!--        const details = await asyncPool(5, defaultMovieIDs, async id => await fetchMovieByID(id));-->
+<!--        const movies = details.filter(Boolean);-->
+<!--        allMovies = movies; -->
+<!--        const genres = extractGenresFromMovies(allMovies);-->
+<!--        renderGenres(genres);-->
+<!--        displayMovies(allMovies.slice(0,20));-->
+<!--        document.getElementById('loading').style.display = 'none';-->
+<!--    }-->
+<!--    async function fetchRandomMoviesByGenre(genre, limit = 20) {-->
+<!--        document.getElementById('loading').style.display = 'block';-->
+<!--        -->
+<!--        try {-->
+<!--            const response = await fetch(`${SERVER_API_URL}/by-genre?g=${encodeURIComponent(genre)}&limit=${limit}`);-->
+<!--            -->
+<!--            if (!response.ok) {-->
+<!--                throw new Error('Không thể tải phim theo thể loại.');-->
+<!--            }-->
+<!--            -->
+<!--            const movies = await response.json();-->
+<!--            document.getElementById('loading').style.display = 'none';-->
+<!--            return movies;-->
+<!--            -->
+<!--        } catch (err) {-->
+<!--            console.error(err);-->
+<!--            document.getElementById('loading').style.display = 'none';-->
+<!--            return [];-->
+<!--        }-->
+<!--    }-->
+<!--    function parseYear(yearStr) {-->
+<!--        if (!yearStr || yearStr === 'N/A') return 0;-->
+<!--        const m = yearStr.match(/(\d{4})/);-->
+<!--        return m ? parseInt(m[1], 10) : 0;-->
+<!--    }-->
+
+<!--    function renderGenres(genres) {-->
+<!--        const container = document.getElementById('genres-container');-->
+<!--        container.innerHTML = '';-->
+<!--        const allBtn = document.createElement('button');-->
+<!--        allBtn.className = 'genre-btn active';-->
+<!--        allBtn.textContent = 'Tất cả';-->
+<!--        allBtn.addEventListener('click', () => {-->
+<!--            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));-->
+<!--            allBtn.classList.add('active');-->
+<!--            displayMovies(allMovies.slice(0, 20)); -->
+<!--        });-->
+<!--        container.appendChild(allBtn);-->
+
+<!--        genres.forEach(g => {-->
+<!--            const btn = document.createElement('button');-->
+<!--            btn.className = 'genre-btn';-->
+<!--            btn.textContent = g;-->
+<!--            btn.addEventListener('click', async () => {-->
+<!--                document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));-->
+<!--                btn.classList.add('active');-->
+<!--                const movies = await fetchRandomMoviesByGenre(g, 20); -->
+<!--                displayMovies(movies);-->
+<!--            });-->
+<!--            container.appendChild(btn);-->
+<!--        });-->
+<!--    }-->
+
+<!--    function displayMovies(movies) {-->
+<!--        const moviesContainer = document.getElementById('movies-container');-->
+<!--        const loadingElement = document.getElementById('loading');-->
+<!--        loadingElement.style.display = 'none';-->
+<!--        moviesContainer.innerHTML = '';-->
+<!--        if (!movies || movies.length === 0) {-->
+<!--            moviesContainer.innerHTML = `<div class="error-message" style="grid-column: 1 / -1;">-->
+<!--                                <i class="fas fa-exclamation-triangle"></i>-->
+<!--                                <p>Không tìm thấy phim nào. Vui lòng thử lại với từ khóa khác.</p>-->
+<!--                            </div>`;-->
+<!--            return;-->
+<!--        }-->
+<!--        movies.forEach(movie => {-->
+<!--            const movieCard = document.createElement('div');-->
+<!--            movieCard.className = 'movie-card';-->
+<!--            const posterPath = movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/500x750/1a2a3a/ffffff?text=No+Image';-->
+<!--            const releaseYear = movie.Year || 'N/A';-->
+<!--            const rating = movie.imdbRating && movie.imdbRating !== 'N/A' ? movie.imdbRating : 'N/A';-->
+<!--            movieCard.innerHTML = `-->
+<!--                <a href="ThongTinPhim.html?movie=${encodeURIComponent(movie.imdbID)}" aria-label="Xem chi tiết ${movie.Title}" onclick="autoCreateShowtimes('${movie.Title}'); return true;">-->
+<!--                    <img src="${posterPath}" alt="${movie.Title}" class="movie-poster">-->
+<!--                </a>-->
+<!--                <div class="movie-info">-->
+<!--                    <h3 class="movie-title">${movie.Title}</h3>-->
+<!--                    <div class="movie-meta">-->
+<!--                        <span class="movie-rating">★ ${rating}</span>-->
+<!--                        <span>${releaseYear}</span>-->
+<!--                    </div>-->
+<!--                    <p class="movie-overview">${movie.Plot && movie.Plot !== 'N/A' ? movie.Plot : 'Chưa có mô tả.'}</p>-->
+<!--                    <a class="btn btn-outline" href="ThongTinPhim.html?movie=${encodeURIComponent(movie.imdbID)}" onclick="autoCreateShowtimes('${movie.Title}'); return true;">Chi tiết</a>-->
+<!--                </div>`;-->
+<!--            moviesContainer.appendChild(movieCard);-->
+<!--        });-->
+<!--    }-->
+
+<!--    async function handleSearch() {-->
+<!--        const query = document.getElementById('search-input').value.trim();-->
+<!--        if (query === '') { loadDefaultMovies(); return; }-->
+<!--        document.getElementById('loading').style.display = 'block';-->
+<!--        -->
+<!--        const searchResults = await searchMovies(query, null, 1); -->
+<!--        -->
+<!--        const movies = [];-->
+<!--        for (const r of searchResults) { -->
+<!--            if (r && r.imdbID) {-->
+<!--                const m = await fetchMovieByID(r.imdbID);-->
+<!--                if (m && m.Response !== 'False') movies.push(m);-->
+<!--            }-->
+<!--        }-->
+<!--        allMovies = movies; -->
+<!--        const genres = extractGenresFromMovies(allMovies);-->
+<!--        renderGenres(genres);-->
+<!--        displayMovies(allMovies);-->
+<!--    }-->
+
+<!--    function parseJwt(token) {-->
+<!--      try {-->
+<!--        const payload = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');-->
+<!--        const json = decodeURIComponent(atob(payload).split('').map(c => '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));-->
+<!--        return JSON.parse(json);-->
+<!--      } catch (e) { return null; }-->
+<!--    }-->
+
+<!--    function getStoredToken() {-->
+<!--      return localStorage.getItem('adminToken') || localStorage.getItem('token') || null;-->
+<!--    }-->
+
+<!--    function logout() {-->
+<!--      localStorage.removeItem('adminToken');-->
+<!--      localStorage.removeItem('token');-->
+<!--      localStorage.removeItem('user');-->
+<!--      window.location.href = 'Phim.html';-->
+<!--    }-->
+
+<!--    function buildAuthUIFromToken(token) {-->
+<!--      const payload = parseJwt(token) || {};-->
+<!--      const name = payload.username || payload.name || payload.email || '';-->
+<!--      const initials = (name || '').split(' ').filter(Boolean).map(s => s[0]).join('').slice(0,2).toUpperCase() ||-->
+<!--                       (payload.email ? payload.email[0].toUpperCase() : 'U');-->
+
+<!--      const wrap = document.createElement('div');-->
+<!--      wrap.className = 'auth-wrap';-->
+
+<!--      const avatarBtn = document.createElement('button');-->
+<!--      avatarBtn.className = 'avatar-btn';-->
+<!--      avatarBtn.title = name || 'Tài khoản';-->
+<!--      avatarBtn.innerHTML = `<span class="avatar-initials">${initials}</span>`;-->
+<!--      avatarBtn.addEventListener('click', () => { window.location.href = 'ThongTinCaNhan.html'; });-->
+
+<!--      const profileLink = document.createElement('a');-->
+<!--      profileLink.className = 'auth-action';-->
+<!--      profileLink.href = 'ThongTinCaNhan.html';-->
+<!--      profileLink.textContent = 'Hồ sơ';-->
+
+<!--      const logoutBtn = document.createElement('button');-->
+<!--      logoutBtn.className = 'auth-action';-->
+<!--      logoutBtn.textContent = 'Đăng xuất';-->
+<!--      logoutBtn.addEventListener('click', logout);-->
+
+<!--      wrap.appendChild(avatarBtn);-->
+<!--      wrap.appendChild(profileLink);-->
+<!--      wrap.appendChild(logoutBtn);-->
+
+<!--      return wrap;-->
+<!--    }-->
+
+<!--    function restoreDefaultAuthButtons(container) {-->
+<!--      container.innerHTML = '';-->
+<!--      const loginBtn = document.createElement('button');-->
+<!--      loginBtn.className = 'btn btn-outline';-->
+<!--      loginBtn.id = 'loginBtn';-->
+<!--      loginBtn.textContent = 'Đăng Nhập';-->
+<!--      loginBtn.onclick = redirectToTaiKhoan;-->
+
+<!--      const registerBtn = document.createElement('button');-->
+<!--      registerBtn.className = 'btn btn-primary';-->
+<!--      registerBtn.id = 'registerBtn';-->
+<!--      registerBtn.textContent = 'Đăng Ký';-->
+<!--      registerBtn.onclick = redirectToTaiKhoan;-->
+
+<!--      container.appendChild(loginBtn);-->
+<!--      container.appendChild(registerBtn);-->
+<!--    }-->
+
+<!--    function updateAuthUI() {-->
+<!--      const token = getStoredToken();-->
+<!--      const userActions = document.querySelectorAll('.user-actions');-->
+<!--      if (!userActions) return;-->
+<!--      userActions.forEach(container => {-->
+<!--        if (token) {-->
+<!--          container.innerHTML = '';-->
+<!--          const authUI = buildAuthUIFromToken(token);-->
+<!--          container.appendChild(authUI);-->
+<!--        } else {-->
+<!--          restoreDefaultAuthButtons(container);-->
+<!--        }-->
+<!--      });-->
+<!--    }-->
+
+<!--    function redirectToTaiKhoan() {-->
+<!--      window.location.href = 'TaiKhoan.html';-->
+<!--    }-->
+
+<!--    // Hàm tự động tạo suất chiếu khi người dùng bấm vào phim-->
+<!--    async function autoCreateShowtimes(movieTitle) {-->
+<!--      try {-->
+<!--        const response = await fetch(-->
+<!--            `${API_BASE_URL}/showtimes/auto-create/${encodeURIComponent(movieTitle)}`,-->
+
+<!--         {-->
+<!--          method: 'POST',-->
+<!--          headers: {-->
+<!--            'Content-Type': 'application/json'-->
+<!--          }-->
+<!--        });-->
+<!--        -->
+<!--        if (response.ok) {-->
+<!--          const data = await response.json();-->
+<!--          console.log('✅ Suất chiếu được tạo:', data.message);-->
+<!--        } else {-->
+<!--          const error = await response.json();-->
+<!--          console.warn('⚠️ Lỗi khi tạo suất chiếu:', error.error);-->
+<!--        }-->
+<!--      } catch (err) {-->
+<!--        console.error('❌ Lỗi gọi API:', err);-->
+<!--      }-->
+<!--    }-->
+
+<!--    window.addEventListener('storage', (e) => {-->
+<!--      if (e.key === 'adminToken' || e.key === 'token') updateAuthUI();-->
+<!--    });-->
+
+<!--    document.addEventListener('DOMContentLoaded', () => {-->
+<!--        loadDefaultMovies();-->
+<!--        updateAuthUI();-->
+<!--        document.getElementById('search-btn').addEventListener('click', handleSearch);-->
+<!--        document.getElementById('search-input').addEventListener('keypress', e => { if (e.key === 'Enter') handleSearch(); });-->
+<!--    });-->
+<!--</script>-->
+    <script>
+        // Gateway base URL
+        const MOVIES_API = (window.API_BASE_URL || 'http://localhost:8080/api') + '/movies';
+
+        let allMovies = [];
+
+        // Gọi API lấy danh sách phim từ MovieService (qua gateway)
+        async function loadMovies() {
+            const loading = document.getElementById('loading');
+            const container = document.getElementById('movies-container');
+
+            loading.style.display = 'block';
+            container.innerHTML = '';
+
+            try {
+                const res = await fetch(MOVIES_API + '?size=1000');
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+
+                const data = await res.json();
+                // API trả về paginated response với field 'content'
+                allMovies = data.content || (Array.isArray(data) ? data : []);
+
+                displayMovies(allMovies);
+            } catch (err) {
+                console.error('Lỗi khi load phim:', err);
+                container.innerHTML = `
+        <div class="error-message" style="grid-column: 1 / -1;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Lỗi khi tải danh sách phim. Vui lòng thử lại sau.</p>
+        </div>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Hiển thị danh sách phim (format cho cả OMDb lẫn MovieService)
+        function displayMovies(movies) {
+            const container = document.getElementById('movies-container');
+            container.innerHTML = '';
+
+            if (!movies || movies.length === 0) {
+                container.innerHTML = `
+        <div class="error-message" style="grid-column: 1 / -1;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Không tìm thấy phim nào.</p>
+        </div>`;
+                return;
+            }
+
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+
+                // Tên phim: ưu tiên field trong DB (title), fallback OMDb (Title)
+                const title = movie.title || movie.Title || 'Không có tiêu đề';
+
+                // Mô tả
+                const description = movie.description || movie.Plot || 'Chưa có mô tả.';
+
+                // Thời lượng / năm
+                const duration = movie.duration ? `${movie.duration} phút` : '';
+                const year = movie.Year || ''; // DB chưa có Year, nên chủ yếu từ OMDb (nếu sau này có)
+
+                // Điểm
+                const rating = movie.imdbRating || movie.rating || 'N/A';
+
+                // Poster: ưu tiên DB.posterUrl, rồi tới OMDb.Poster, cuối cùng là placeholder
+                let poster = movie.posterUrl || movie.Poster;
+                // Thay thế via.placeholder.com bằng placehold.co (hoạt động tốt hơn)
+                if (!poster || poster === 'N/A' || poster.includes('via.placeholder')) {
+                    poster = `https://placehold.co/300x450/667eea/white?text=${encodeURIComponent(movie.title || 'Movie')}`;
+                }
+
+                // ID để chuyển sang trang chi tiết/ đặt vé
+                const movieId = movie.movieId || movie.id || movie.imdbID;
+
+                card.innerHTML = `
+        <a href="ThongTinPhim.html?id=${encodeURIComponent(movieId)}">
+          <img src="${poster}" alt="${title}" class="movie-poster" 
+               onerror="this.src='https://dummyimage.com/300x450/667eea/fff&text=${encodeURIComponent(title)}'"
+               loading="lazy">
+        </a>
+        <div class="movie-info">
+          <h3 class="movie-title">${title}</h3>
+          <p class="movie-meta">
+            <span>${year}</span>
+            ${duration ? `<span>${duration}</span>` : ''}
+          </p>
+          <p class="movie-rating">
+            <i class="fas fa-star"></i> ${rating}
+          </p>
+          <p class="movie-description">
+            ${description}
+          </p>
+          <button class="btn btn-outline" onclick="window.location.href='ThongTinPhim.html?id=${encodeURIComponent(movieId)}'">
+            Chi tiết
+          </button>
+        </div>
+      `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Sau này bạn có thể thêm search/filter dựa trên allMovies:
+        // function filterByKeyword(keyword) { ... displayMovies(filtered) }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMovies();
+        });
+    </script>
+
+</body>
+</html>

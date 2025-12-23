@@ -36,4 +36,14 @@ public class Cinema {
     @JsonManagedReference
     List<Room> rooms;
 
+    @PrePersist
+    void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+     @PreUpdate
+    void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }

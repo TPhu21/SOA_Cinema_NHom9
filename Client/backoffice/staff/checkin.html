@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soát Vé - CineMax Staff</title>
+    <link rel="stylesheet" href="../../shared/css/backoffice.css">
+    <style>
+        .checkin-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .scan-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .scan-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+        
+        .scan-input {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .scan-input input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .scan-input input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .scan-input button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .result-section {
+            display: none;
+        }
+        
+        .result-section.show {
+            display: block;
+        }
+        
+        .ticket-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .ticket-card.valid {
+            border-color: var(--success-color);
+        }
+        
+        .ticket-card.invalid {
+            border-color: var(--danger-color);
+        }
+        
+        .ticket-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .ticket-header.valid {
+            background: rgba(34, 197, 94, 0.2);
+        }
+        
+        .ticket-header.invalid {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        
+        .ticket-status-icon {
+            font-size: 2.5rem;
+        }
+        
+        .ticket-status-text h3 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        
+        .ticket-body {
+            padding: 25px;
+        }
+        
+        .ticket-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .ticket-info-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+        }
+        
+        .ticket-info-item.full-width {
+            grid-column: span 2;
+        }
+        
+        .ticket-info-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        
+        .ticket-info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .ticket-actions {
+            padding: 20px 25px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+        }
+        
+        .ticket-actions .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 15px;
+            font-size: 1rem;
+        }
+        
+        .history-section {
+            margin-top: 30px;
+        }
+        
+        .history-section h2 {
+            margin-bottom: 20px;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .history-icon {
+            font-size: 1.5rem;
+        }
+        
+        .history-icon.success { color: var(--success-color); }
+        .history-icon.error { color: var(--danger-color); }
+        
+        .history-info {
+            flex: 1;
+        }
+        
+        .history-code {
+            font-weight: 600;
+        }
+        
+        .history-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🎬 CineMax</div>
+            <span class="role-badge staff">👤 Staff</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="../dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            
+            <div class="nav-section">Công Việc</div>
+            <a href="checkin.html" class="nav-item active">
+                <span class="nav-icon">✅</span>
+                <span class="nav-text">Soát Vé</span>
+            </a>
+            <a href="tickets.html" class="nav-item">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-text">Bán Vé Trực Tiếp</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">S</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Staff</div>
+                    <div class="user-role">Nhân viên</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">
+                <span>🚪</span> Đăng Xuất
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>✅ Soát Vé</h1>
+            <div class="header-actions">
+                <span class="current-time" id="currentTime"></span>
+            </div>
+        </header>
+        
+        <div class="checkin-container">
+            <!-- Scan Section -->
+            <section class="scan-section">
+                <div class="scan-icon">📱</div>
+                <h2>Quét mã vé hoặc nhập mã</h2>
+                <p style="color: var(--text-muted); margin-top: 10px;">
+                    Nhập mã đặt vé để kiểm tra và xác nhận check-in
+                </p>
+                
+                <div class="scan-input">
+                    <input type="text" id="bookingCode" placeholder="VD: BK123456" 
+                           maxlength="20" autocomplete="off" autofocus>
+                    <button class="btn btn-primary" onclick="checkTicket()">
+                        🔍 Kiểm Tra
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Result Section -->
+            <section class="result-section" id="resultSection">
+                <div class="ticket-card" id="ticketCard">
+                    <div class="ticket-header" id="ticketHeader">
+                        <div class="ticket-status-icon" id="statusIcon">✅</div>
+                        <div class="ticket-status-text">
+                            <h3 id="statusTitle">Vé hợp lệ</h3>
+                            <p id="statusDesc">Có thể cho khách vào rạp</p>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-body">
+                        <div class="ticket-info">
+                            <div class="ticket-info-item full-width">
+                                <div class="ticket-info-label">Phim</div>
+                                <div class="ticket-info-value" id="movieName">--</div>
+                            </div>
+                            <div class="ticket-info-item">
+                                <div class="ticket-info-label">Ngày chiếu</div>
+                                <div class="ticket-info-value" id="showDate">--</div>
+                            </div>
+                            <div class="ticket-info-item">
+                                <div class="ticket-info-label">Giờ chiếu</div>
+                                <div class="ticket-info-value" id="showTime">--</div>
+                            </div>
+                            <div class="ticket-info-item">
+                                <div class="ticket-info-label">Rạp / Phòng</div>
+                                <div class="ticket-info-value" id="cinema">--</div>
+                            </div>
+                            <div class="ticket-info-item">
+                                <div class="ticket-info-label">Ghế</div>
+                                <div class="ticket-info-value" id="seats">--</div>
+                            </div>
+                            <div class="ticket-info-item full-width">
+                                <div class="ticket-info-label">Khách hàng</div>
+                                <div class="ticket-info-value" id="customer">--</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-actions" id="ticketActions">
+                        <button class="btn btn-success" onclick="confirmCheckin()">
+                            ✅ Xác Nhận Check-in
+                        </button>
+                        <button class="btn btn-outline" onclick="clearResult()">
+                            ↩️ Quét Vé Khác
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- History Section -->
+            <section class="history-section">
+                <h2>Lịch sử soát vé</h2>
+                <div id="historyList">
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        Chưa có lịch sử soát vé
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="../../shared/js/auth.js"></script>
+    <script>
+        // Kiểm tra quyền
+        if (!requireAuth(ROLES.STAFF, ROLES.ADMIN)) {
+            // requireAuth sẽ tự redirect
+        }
+        
+        // Load user info
+        const user = getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.name || user.username;
+            document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+        }
+        
+        // Update time
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleString('vi-VN');
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Enter to search
+        document.getElementById('bookingCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkTicket();
+        });
+        
+        // Check ticket
+        async function checkTicket() {
+            const code = document.getElementById('bookingCode').value.trim().toUpperCase();
+            
+            if (!code) {
+                alert('Vui lòng nhập mã vé');
+                return;
+            }
+            
+            try {
+                // TODO: Gọi API thực tế
+                // const response = await authFetch(`/api/bookings/validate/${code}`);
+                
+                // DEMO: Fake data
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Demo: BK123456 là vé hợp lệ
+                if (code === 'BK123456') {
+                    showValidTicket({
+                        code: 'BK123456',
+                        movie: 'Avengers: Endgame',
+                        date: '21/12/2025',
+                        time: '19:30',
+                        cinema: 'CGV Vincom Ba Trieu - Phòng 05',
+                        seats: 'H5, H6, H7',
+                        customer: 'Nguyễn Văn A - 0901234567'
+                    });
+                } else {
+                    showInvalidTicket('Không tìm thấy vé với mã này');
+                }
+                
+            } catch (error) {
+                showInvalidTicket(error.message || 'Lỗi kiểm tra vé');
+            }
+        }
+        
+        function showValidTicket(data) {
+            const resultSection = document.getElementById('resultSection');
+            const ticketCard = document.getElementById('ticketCard');
+            const ticketHeader = document.getElementById('ticketHeader');
+            
+            ticketCard.className = 'ticket-card valid';
+            ticketHeader.className = 'ticket-header valid';
+            
+            document.getElementById('statusIcon').textContent = '✅';
+            document.getElementById('statusTitle').textContent = 'Vé hợp lệ';
+            document.getElementById('statusDesc').textContent = 'Có thể cho khách vào rạp';
+            
+            document.getElementById('movieName').textContent = data.movie;
+            document.getElementById('showDate').textContent = data.date;
+            document.getElementById('showTime').textContent = data.time;
+            document.getElementById('cinema').textContent = data.cinema;
+            document.getElementById('seats').textContent = data.seats;
+            document.getElementById('customer').textContent = data.customer;
+            
+            document.getElementById('ticketActions').innerHTML = `
+                <button class="btn btn-success" onclick="confirmCheckin('${data.code}')">
+                    ✅ Xác Nhận Check-in
+                </button>
+                <button class="btn btn-outline" onclick="clearResult()">
+                    ↩️ Quét Vé Khác
+                </button>
+            `;
+            
+            resultSection.classList.add('show');
+        }
+        
+        function showInvalidTicket(message) {
+            const resultSection = document.getElementById('resultSection');
+            const ticketCard = document.getElementById('ticketCard');
+            const ticketHeader = document.getElementById('ticketHeader');
+            
+            ticketCard.className = 'ticket-card invalid';
+            ticketHeader.className = 'ticket-header invalid';
+            
+            document.getElementById('statusIcon').textContent = '❌';
+            document.getElementById('statusTitle').textContent = 'Vé không hợp lệ';
+            document.getElementById('statusDesc').textContent = message;
+            
+            document.getElementById('movieName').textContent = '--';
+            document.getElementById('showDate').textContent = '--';
+            document.getElementById('showTime').textContent = '--';
+            document.getElementById('cinema').textContent = '--';
+            document.getElementById('seats').textContent = '--';
+            document.getElementById('customer').textContent = '--';
+            
+            document.getElementById('ticketActions').innerHTML = `
+                <button class="btn btn-outline" onclick="clearResult()">
+                    ↩️ Quét Vé Khác
+                </button>
+            `;
+            
+            resultSection.classList.add('show');
+        }
+        
+        async function confirmCheckin(code) {
+            try {
+                // TODO: Gọi API check-in thực tế
+                // await authFetch(`/api/bookings/${code}/checkin`, { method: 'POST' });
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                alert('✅ Check-in thành công!');
+                addToHistory(code, true);
+                clearResult();
+                
+            } catch (error) {
+                alert('❌ Lỗi: ' + (error.message || 'Không thể check-in'));
+            }
+        }
+        
+        function clearResult() {
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('bookingCode').value = '';
+            document.getElementById('bookingCode').focus();
+        }
+        
+        const history = [];
+        function addToHistory(code, success) {
+            history.unshift({
+                code,
+                success,
+                time: new Date().toLocaleTimeString('vi-VN')
+            });
+            
+            const html = history.slice(0, 10).map(item => `
+                <div class="history-item">
+                    <div class="history-icon ${item.success ? 'success' : 'error'}">
+                        ${item.success ? '✅' : '❌'}
+                    </div>
+                    <div class="history-info">
+                        <div class="history-code">${item.code}</div>
+                        <div class="history-time">${item.time}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('historyList').innerHTML = html;
+        }
+        
+        function handleLogout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                logout();
+                window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>
